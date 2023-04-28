@@ -1,0 +1,8 @@
+*.o
+**/build
+*-swp
+.vscode/*
+
+*.log
+
+!.vscode/launch.json
