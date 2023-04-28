@@ -5,6 +5,8 @@ from scratch. This is more like a playground or proof of concept to show and tes
 used for bare metal micro-controller programming. There may be several bugs in this project, just
 open an issue or pull-request if you have time :)
 
+The API/Design is heavily inspired by the API of Tock (https://github.com/tock/tock).
+
 ## What works
 This project is nowhere near feature complete. It is still heavily under development. But a few
 things are still working already:
@@ -12,6 +14,21 @@ things are still working already:
 - DMA
 - UART
 - SPI (theoretically but it's not tested yet)
+
+## What has to be done
+- [ ] A proper way to describe the defined bitfield-values of the peripheral registers
+- [ ] FPU support
+- [ ] Missing peripheral drivers
+- [ ] Atomic instructions
+- [ ] Rewrite of buildsystem (for some reason `make rebuild -j` does not work)
+- [ ] Rewrite of `Fifo` (especially an `emplace()` function via variadic templates)
+
+## How to use
+Every project has to be located in the `projects` directory. Simply create a new folder and copy the
+makefile from `projects/test/` and adapt it to your needs. Compile the project with `make`, clean
+the project with `make clean`, rebuild the project with `make rebuild` and flash the binary to the
+target with `make flash`. I was developing this code with VSCode on Archlinux, thus I programmed the
+target via openOCD (`openocd.cfg`).
 
 ## Hardware
 This codebase is designed for the MSP432P401R microcontroller, which consists of a Cortex M4F and
