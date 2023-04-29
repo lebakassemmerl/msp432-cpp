@@ -15,7 +15,7 @@
 
 static const uint8_t TX_IDLE = 0xFF;
 
-template<typename T>
+template<typename T> requires UsciReg<T>
 err::Err SpiMaster<T>::init(const Cs& cs) noexcept
 {
     err::Err ret;
@@ -82,7 +82,7 @@ err::Err SpiMaster<T>::init(const Cs& cs) noexcept
     return err::Err::Ok;
 }
 
-template<typename T>
+template<typename T> requires UsciReg<T>
 err::Err SpiMaster<T>::write(std::span<uint8_t> data, void* context, SpiCallback cb) noexcept
 {
     SpiJob job;
@@ -108,7 +108,7 @@ err::Err SpiMaster<T>::write(std::span<uint8_t> data, void* context, SpiCallback
     return err::Err::Ok;
 }
 
-template<typename T>
+template<typename T> requires UsciReg<T>
 err::Err SpiMaster<T>::read(std::span<uint8_t> buffer, void* context, SpiCallback cb) noexcept
 {
     SpiJob job;
@@ -134,7 +134,7 @@ err::Err SpiMaster<T>::read(std::span<uint8_t> buffer, void* context, SpiCallbac
     return err::Err::Ok;
 }
 
-template<typename T>
+template<typename T> requires UsciReg<T>
 err::Err SpiMaster<T>::write_read(std::span<uint8_t> txbuf, std::span<uint8_t> rxbuf,
     void* context, SpiCallback cb) noexcept
 {
@@ -161,7 +161,7 @@ err::Err SpiMaster<T>::write_read(std::span<uint8_t> txbuf, std::span<uint8_t> r
 
     return err::Err::Ok;
 }
-template<typename T>
+template<typename T> requires UsciReg<T>
 void SpiMaster<T>::redirect_int_handler(const uint8_t* src_buf, uint8_t* dst_buf, size_t len,
     void* instance)
 {
@@ -169,7 +169,7 @@ void SpiMaster<T>::redirect_int_handler(const uint8_t* src_buf, uint8_t* dst_buf
     inst->int_handler(src_buf, dst_buf, len);
 }
 
-template<typename T>
+template<typename T> requires UsciReg<T>
 void SpiMaster<T>::start_transmission() noexcept
 {
     SpiJob& job = job_fifo.peek().second.value().get();
@@ -195,7 +195,7 @@ void SpiMaster<T>::start_transmission() noexcept
     }
 }
 
-template<typename T>
+template<typename T> requires UsciReg<T>
 void SpiMaster<T>::int_handler(const uint8_t* src_buf, uint8_t* dst_buf, size_t len) noexcept
 {
     SpiJob& job = job_fifo.peek().second.value().get();
