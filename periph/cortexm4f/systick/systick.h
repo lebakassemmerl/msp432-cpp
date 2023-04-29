@@ -27,7 +27,7 @@ public:
     uint64_t uptime_ms() const noexcept;
 
     friend class CortexM4F;
-    friend void systick_handler(void);
+    friend void systick_handler(void) noexcept;
 private:
     constexpr explicit Systick() noexcept : reg_addr(SYSTICK_BASE), up(0) {}
 

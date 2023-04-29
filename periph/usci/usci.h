@@ -53,7 +53,7 @@ public:
     constexpr ReadWrite<uint16_t>& ifg() noexcept { return reg().ifg; }
 
     friend class Msp432;
-    friend void periph_int_handler(void);
+    friend void periph_int_handler(void) noexcept;
 private:
     constexpr explicit Usci(size_t base) noexcept
         : reg_base(base), instance(nullptr), irq_handler(nullptr) {}

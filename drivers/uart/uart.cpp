@@ -137,7 +137,7 @@ err::Err Uart::init(const Cs& cs) noexcept
     return err::Err::Ok;
 }
 
-err::Err Uart::write(std::span<uint8_t> data)
+err::Err Uart::write(std::span<uint8_t> data) noexcept
 {
     if (!initialized)
         return err::Err::NotInitialized;
@@ -163,13 +163,15 @@ void Uart::queue_tx_job() noexcept
         job.data(), reinterpret_cast<uint8_t*>(&usci.reg().txbuf), job.size());
 }
 
-void Uart::redirect_tx_handler(const uint8_t* src_buf, uint8_t* dst_buf, size_t len, void* instance)
+void Uart::redirect_tx_handler(
+    const uint8_t* src_buf, uint8_t* dst_buf, size_t len, void* instance) noexcept
 {
     Uart* inst = reinterpret_cast<Uart*>(instance);
     inst->tx_handler(src_buf, len);
 }
 
-void Uart::redirect_rx_handler(const uint8_t* src_buf, uint8_t* dst_buf, size_t len, void* instance)
+void Uart::redirect_rx_handler(
+    const uint8_t* src_buf, uint8_t* dst_buf, size_t len, void* instance) noexcept
 {
     Uart* inst = reinterpret_cast<Uart*>(instance);
     inst->rx_handler(dst_buf, len);

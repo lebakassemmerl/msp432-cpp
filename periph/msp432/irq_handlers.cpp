@@ -38,8 +38,7 @@ void fpu_handler(void) noexcept
     cm4f::set_fpscr(0);
 }
 
-
-void periph_int_handler(void)
+void periph_int_handler(void) noexcept
 {
     Msp432& msp = Msp432::instance();
     Nvic& nvic = msp.cortexm4f().nvic();

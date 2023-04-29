@@ -163,7 +163,7 @@ err::Err SpiMaster<T>::write_read(std::span<uint8_t> txbuf, std::span<uint8_t> r
 }
 template<typename T> requires UsciReg<T>
 void SpiMaster<T>::redirect_int_handler(const uint8_t* src_buf, uint8_t* dst_buf, size_t len,
-    void* instance)
+    void* instance) noexcept
 {
     SpiMaster* inst = reinterpret_cast<SpiMaster*>(instance);
     inst->int_handler(src_buf, dst_buf, len);

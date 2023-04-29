@@ -42,7 +42,9 @@ CXXFLAGS := \
 	-fno-unwind-tables \
 	-fconcepts-diagnostics-depth=6 \
 	-Wdouble-promotion \
-	-Wall
+	-Wall \
+	-Wextra \
+	-Wpedantic \
 
 LDFLAGS := \
 	-Wl,--start-group \
