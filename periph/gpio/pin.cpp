@@ -24,7 +24,7 @@ void Pin::make_output() const noexcept
 {
     set_pin_function(Pin::PinFunction::Gpio);
 
-    reg().dir[reg_idx].set(reg().dir[reg_idx].get()| 1 << pin_nr);
+    reg().dir[reg_idx].set(reg().dir[reg_idx].get()| static_cast<uint8_t>(1U << pin_nr));
 
     set_low();
 }
@@ -33,32 +33,32 @@ void Pin::make_input() const noexcept
 {
     set_pin_function(Pin::PinFunction::Gpio);
 
-    reg().dir[reg_idx].set(reg().dir[reg_idx].get() & ~(1 << pin_nr));
+    reg().dir[reg_idx].set(reg().dir[reg_idx].get() & ~static_cast<uint8_t>(1U << pin_nr));
 }
 
 bool Pin::is_output() const noexcept
 {
-    return (reg().dir[reg_idx].get() & (1 << pin_nr)) > 0;
+    return (reg().dir[reg_idx].get() & static_cast<uint8_t>(1U << pin_nr)) > 0;
 }
 
 void Pin::set_high() const noexcept
 {
-    reg().out[reg_idx].set(reg().out[reg_idx].get() | (1 << pin_nr));
+    reg().out[reg_idx].set(reg().out[reg_idx].get() | static_cast<uint8_t>(1U << pin_nr));
 }
 
 void Pin::set_low() const noexcept
 {
-    reg().out[reg_idx].set(reg().out[reg_idx].get() & ~(1 << pin_nr));
+    reg().out[reg_idx].set(reg().out[reg_idx].get() & ~static_cast<uint8_t>(1U << pin_nr));
 }
 
 void Pin::toggle() const noexcept
 {
-    reg().out[reg_idx].set(reg().out[reg_idx].get() ^ (1 << pin_nr));
+    reg().out[reg_idx].set(reg().out[reg_idx].get() ^ static_cast<uint8_t>(1U << pin_nr));
 }
 
 bool Pin::read() const noexcept
 {
-    return (reg().in[reg_idx].get() & (1 << pin_nr)) > 0;
+    return (reg().in[reg_idx].get() & static_cast<uint8_t>(1U << pin_nr)) > 0;
 }
 
 void Pin::set_pull_mode(PullMode mode) const noexcept
@@ -71,17 +71,17 @@ void Pin::set_pull_mode(PullMode mode) const noexcept
 
     switch (mode) {
     case PullMode::PullUp:
-        ren |= 1 << pin_nr;
-        out |= 1 << pin_nr;
+        ren |= static_cast<uint8_t>(1U << pin_nr);
+        out |= static_cast<uint8_t>(1U << pin_nr);
         break;
 
     case PullMode::PullDown:
-        ren |= 1 << pin_nr;
-        out &= ~(1 << pin_nr);
+        ren |= static_cast<uint8_t>(1U << pin_nr);
+        out &= ~static_cast<uint8_t>(1U << pin_nr);
         break;
 
     case PullMode::None:
-        ren &= ~(1 << pin_nr);
+        ren &= ~static_cast<uint8_t>(1U << pin_nr);
         break;
     }
 
@@ -94,8 +94,8 @@ PullMode Pin::get_pull_mode() const noexcept
     if (is_output())
         return PullMode::None;
 
-    bool ren = (reg().ren[reg_idx].get() & (1 << pin_nr)) > 0;
-    bool out = (reg().out[reg_idx].get() & (1 << pin_nr)) > 0;
+    bool ren = (reg().ren[reg_idx].get() & static_cast<uint8_t>(1U << pin_nr)) > 0;
+    bool out = (reg().out[reg_idx].get() & static_cast<uint8_t>(1U << pin_nr)) > 0;
 
     if (!ren) {
         return PullMode::None;

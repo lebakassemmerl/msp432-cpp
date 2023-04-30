@@ -45,6 +45,8 @@ CXXFLAGS := \
 	-Wall \
 	-Wextra \
 	-Wpedantic \
+	-Wconversion \
+	-Wno-unused-parameter
 
 LDFLAGS := \
 	-Wl,--start-group \

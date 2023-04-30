@@ -27,9 +27,10 @@ constexpr T leftshift(V val, T pos)
 template <typename T> requires std::unsigned_integral<T>
 constexpr T mask(size_t bit_high, size_t bit_low)
 {
+    T one = static_cast<T>(1U);
     T step1 = ~static_cast<T>(0);
-    T step2 = step1 - ((static_cast<T>(1) << bit_low) - 1);
-    T step3 = step1 >> (((sizeof(T) * 8) - 1) - bit_high);
+    T step2 = step1 - static_cast<T>(((one << bit_low) - one));
+    T step3 = step1 >> (((sizeof(T) * 8) - one) - bit_high);
     return step2 & step3;
 }
 

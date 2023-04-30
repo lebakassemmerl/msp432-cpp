@@ -79,23 +79,23 @@ protected:
 
         switch (func) {
         case PinFunction::Gpio:
-            sel0 &= ~(1 << pin_nr);
-            sel1 &= ~(1 << pin_nr);
+            sel0 &= ~static_cast<uint8_t>(1U << pin_nr);
+            sel1 &= ~static_cast<uint8_t>(1U << pin_nr);
             break;
 
         case PinFunction::Primary:
-            sel0 |= 1 << pin_nr;
-            sel1 &= ~(1 << pin_nr);
+            sel0 |= static_cast<uint8_t>(1U << pin_nr);
+            sel1 &= ~static_cast<uint8_t>(1U << pin_nr);
             break;
 
         case PinFunction::Secondary:
-            sel0 &= ~(1 << pin_nr);
-            sel1 |= 1 << pin_nr;
+            sel0 &= ~static_cast<uint8_t>(1U << pin_nr);
+            sel1 |= static_cast<uint8_t>(1U << pin_nr);
             break;
 
         case PinFunction::Tertiary:
-            sel0 |= 1 << pin_nr;
-            sel1 |= 1 << pin_nr;
+            sel0 |= static_cast<uint8_t>(1U << pin_nr);
+            sel1 |= static_cast<uint8_t>(1U << pin_nr);
             break;
         }
 
