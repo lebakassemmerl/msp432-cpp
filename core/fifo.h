@@ -8,6 +8,7 @@
 #pragma once
 
 #include <array>
+#include <expected>
 #include <functional>
 #include <cstddef>
 #include <optional>
@@ -18,83 +19,93 @@
 template<typename T, size_t N>
 class Fifo {
 public:
-    constexpr Fifo() noexcept : m_used(0), m_head(0), m_tail(0) {}
+    constexpr Fifo() noexcept : used_elems(0), head(0), tail(0) {}
     constexpr ~Fifo() noexcept {}
 
     err::Err push(const T& val) noexcept
     {
-        if (m_used >= N)
+        if (used_elems >= N)
             return err::Err::NoMem;
 
-        buf[m_head] = val;
+        buf[head] = val;
         inc_used();
 
         return err::Err::Ok;
     }
 
-    std::pair<err::Err, std::optional<std::reference_wrapper<T>>> emplace() noexcept
+    template<typename... Args>
+    err::Err emplace(Args&&... args) noexcept
     {
-        if (m_used >= N)
-            return {err::Err::NoMem, std::nullopt};
+        if (used_elems >= N)
+            return err::Err::NoMem;
 
-        T& ref = buf[m_head];
+        new(&buf[head])T{std::forward<Args>(args)...};
         inc_used();
 
-        return {err::Err::Ok, ref};
+        return err::Err::Ok;
     }
 
-    std::pair<err::Err, std::optional<std::reference_wrapper<T>>> peek() noexcept
+    std::expected<T, err::Err> peek() noexcept
     {
-        if (m_used == 0)
-            return {err::Err::Empty, std::nullopt};
+        if (used_elems == 0)
+            return std::unexpected{err::Err::Empty};
 
-        return {err::Err::Ok, buf[m_tail]};
+        return std::expected<T, err::Err>{buf[tail]};
     }
 
-    std::pair<err::Err, std::optional<std::reference_wrapper<T>>> pop_elem() noexcept
+    std::expected<std::reference_wrapper<T>, err::Err> peek_ref() noexcept
     {
-        if (m_used == 0)
-            return {err::Err::Empty, std::nullopt};
+        if (used_elems == 0)
+            return std::unexpected{err::Err::Empty};
 
-        T& ref = buf[m_tail];
+        return std::expected<std::reference_wrapper<T>, err::Err>{
+            std::reference_wrapper<T>{buf[tail]}};
+    }
+
+    std::expected<T, err::Err> pop_elem() noexcept
+    {
+        if (used_elems == 0)
+            return std::unexpected{err::Err::Empty};
+
+        T ret = buf[tail];
         dec_used();
 
-        return {err::Err::Ok, ref};
+        return std::expected<T, err::Err>{ret};
     }
 
     err::Err pop() noexcept
     {
-        if (m_used == 0)
+        if (used_elems == 0)
             return err::Err::Empty;
 
         dec_used();
         return err::Err::Ok;
     }
 
-    size_t used() const noexcept { return m_used; }
-    size_t free() const noexcept { return N - m_used; }
-    bool is_full() const noexcept { return m_used == N; }
-    bool is_empty() const noexcept { return m_used == 0; }
+    size_t used() const noexcept { return used_elems; }
+    size_t free() const noexcept { return N - used_elems; }
+    bool is_full() const noexcept { return used_elems == N; }
+    bool is_empty() const noexcept { return used_elems == 0; }
 
 private:
     inline void inc_used() noexcept
     {
-        m_used++;
-        m_head = m_head + 1;
-        if (m_head >= N)
-            m_head = 0;
+        used_elems++;
+        head = head + 1;
+        if (head >= N)
+            head = 0;
     }
 
     inline void dec_used() noexcept
     {
-        m_used--;
-        m_tail = m_tail + 1;
-        if (m_tail >= N)
-            m_tail = 0;
+        used_elems--;
+        tail = tail + 1;
+        if (tail >= N)
+            tail = 0;
     }
 
     std::array<T, N> buf;
-    size_t m_used;
-    volatile size_t m_head;
-    volatile size_t m_tail;
+    size_t used_elems;
+    volatile size_t head;
+    volatile size_t tail;
 };

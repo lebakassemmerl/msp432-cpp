@@ -29,7 +29,7 @@ TARGET_OPTIONS := \
 	-mfpu=fpv4-sp-d16
 
 CXXFLAGS := \
-	-std=c++20 \
+	-std=c++2b \
 	-ffunction-sections \
 	-fdata-sections \
 	-fno-use-cxa-atexit \

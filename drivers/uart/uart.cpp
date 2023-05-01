@@ -145,7 +145,7 @@ err::Err Uart::write(std::span<uint8_t> data) noexcept
     if (tx_jobs.is_full())
         return err::Err::NoMem;
 
-    tx_jobs.push(data);
+    tx_jobs.emplace(data);
 
     if (!tx_dma.transfer_going())
         queue_tx_job();
@@ -158,7 +158,7 @@ void Uart::queue_tx_job() noexcept
     if (tx_jobs.is_empty())
         return;
 
-    auto& job = tx_jobs.peek().second.value().get();
+    std::span<uint8_t> job = tx_jobs.peek().value();
     tx_dma.transfer_mem_to_periph(
         job.data(), reinterpret_cast<uint8_t*>(&usci.reg().txbuf), job.size());
 }
