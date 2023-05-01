@@ -34,6 +34,7 @@ int main(void)
     chip.gpio_pins().int_pin(IntPinNr::P01_3).enable_primary_function();
 
     uart0.init(chip.cs());
+    spi1.init(chip.cs());
 
     auto& led_red = chip.gpio_pins().int_pin(IntPinNr::P02_0);
     auto& led_green = chip.gpio_pins().int_pin(IntPinNr::P02_1);

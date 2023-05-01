@@ -74,6 +74,12 @@ enum class DmaPtrIncrement : uint8_t {
 };
 
 struct DmaConfig {
+    constexpr explicit DmaConfig(uint8_t src_chan, DmaDataWidth width, DmaPtrIncrement src_incr,
+        DmaPtrIncrement dst_incr, void* instance,
+        void (*cb)(const uint8_t* src_buf, uint8_t* dst_buf, size_t len, void* instance)) noexcept
+        : src_chan(src_chan), width(width), src_incr(src_incr), dst_incr(dst_incr),
+        instance(instance), done(cb) {}
+
     constexpr explicit DmaConfig() noexcept
         : src_chan(0), width(DmaDataWidth::Width8Bit), src_incr(DmaPtrIncrement::Incr8Bit),
         dst_incr(DmaPtrIncrement::Incr8Bit), instance(nullptr), done(nullptr) {}
