@@ -61,7 +61,7 @@ err::Err DmaChannel::transfer_mem_to_periph(const uint8_t* src, uint8_t* dst, ui
     ctrl_prim.dst_ptr.set(dst_end_ptr);
     ctrl_prim.ctrl.modify(
         dmactrl::ctrl::src_inc.value(static_cast<uint32_t>(conf.src_incr))
-        + dmactrl::ctrl::src_inc.value(static_cast<uint32_t>(conf.dst_incr))
+        + dmactrl::ctrl::dst_inc.value(static_cast<uint32_t>(conf.dst_incr))
     );
 
     info.src = src;
@@ -101,7 +101,7 @@ err::Err DmaChannel::transfer_periph_to_mem(const uint8_t* src, uint8_t* dst, ui
     ctrl_prim.dst_ptr.set(dst_end_ptr);
     ctrl_prim.ctrl.modify(
         dmactrl::ctrl::src_inc.value(static_cast<uint32_t>(conf.src_incr))
-        + dmactrl::ctrl::src_inc.value(static_cast<uint32_t>(conf.dst_incr))
+        + dmactrl::ctrl::dst_inc.value(static_cast<uint32_t>(conf.dst_incr))
     );
 
     info.src = src;
@@ -147,7 +147,7 @@ err::Err DmaChannel::transfer_custom(const uint8_t* src, uint8_t* dst, DmaPtrInc
     ctrl_prim.dst_ptr.set(dst_end_ptr);
     ctrl_prim.ctrl.modify(
         dmactrl::ctrl::src_inc.value(static_cast<uint32_t>(src_incr))
-        + dmactrl::ctrl::src_inc.value(static_cast<uint32_t>(dst_incr))
+        + dmactrl::ctrl::dst_inc.value(static_cast<uint32_t>(dst_incr))
     );
 
     info.src = src;
