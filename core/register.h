@@ -48,8 +48,10 @@ template<typename T> requires std::unsigned_integral<T>
 class ReadWrite {
 public:
     ReadWrite() = delete;
-    ReadWrite(T&) = delete;
-    ReadWrite(T&&) = delete;
+    ReadWrite(const ReadWrite<T>&) = delete;
+    ReadWrite(const ReadWrite<T>&&) = delete;
+    ReadWrite<T>& operator=(const ReadWrite<T>&) = delete;
+    ReadWrite<T>& operator=(const ReadWrite<T>&&) = delete;
     ~ReadWrite() = delete;
 
     constexpr void set(T val) noexcept { reg = val; }
@@ -70,8 +72,10 @@ template<typename T> requires std::unsigned_integral<T>
 class WriteOnly {
 public:
     WriteOnly() = delete;
-    WriteOnly(T&) = delete;
-    WriteOnly(T&&) = delete;
+    WriteOnly(const WriteOnly<T>&) = delete;
+    WriteOnly(const WriteOnly<T>&&) = delete;
+    WriteOnly<T>& operator=(const WriteOnly<T>&) = delete;
+    WriteOnly<T>& operator=(const WriteOnly<T>&&) = delete;
     ~WriteOnly() = delete;
 
     constexpr void set(T val) noexcept { reg = val; }
@@ -85,8 +89,10 @@ template<typename T> requires std::unsigned_integral<T>
 class ReadOnly {
 public:
     ReadOnly() = delete;
-    ReadOnly(T&) = delete;
-    ReadOnly(T&&) = delete;
+    ReadOnly(const ReadOnly<T>&) = delete;
+    ReadOnly(const ReadOnly<T>&&) = delete;
+    ReadOnly<T>& operator=(const ReadOnly<T>&) = delete;
+    ReadOnly<T>& operator=(const ReadOnly<T>&&) = delete;
     ~ReadOnly() = delete;
 
     constexpr T get() const noexcept { return reg; }
@@ -99,8 +105,10 @@ template<typename T> requires std::unsigned_integral<T>
 class Reserved {
 public:
     Reserved() = delete;
-    Reserved(T&) = delete;
-    Reserved(T&&) = delete;
+    Reserved(const Reserved<T>&) = delete;
+    Reserved(const Reserved<T>&&) = delete;
+    Reserved<T>& operator=(const Reserved<T>&) = delete;
+    Reserved<T>& operator=(const Reserved<T>&&) = delete;
     ~Reserved() = delete;
 
 private:
@@ -111,7 +119,10 @@ template<typename T> requires std::unsigned_integral<T>
 class InMemory {
 public:
     constexpr explicit InMemory(const T& val) noexcept : reg(val) {}
-    InMemory(T&) = delete;
+    InMemory(const InMemory<T>&) = delete;
+    InMemory(const InMemory<T>&&) = delete;
+    InMemory<T>& operator=(const InMemory<T>&) = delete;
+    InMemory<T>& operator=(const InMemory<T>&&) = delete;
 
     constexpr void set(T val) noexcept { reg = val; }
     constexpr void set(const BitField<T>& bf) { reg = bf.get_value(); }
