@@ -19,9 +19,9 @@ things are still working already:
 - [ ] A proper way to describe the defined bitfield-values of the peripheral registers
 - [ ] FPU support
 - [ ] Missing peripheral drivers
-- [ ] Atomic instructions
+- [/] Atomic instructions (basic functionality working but not perfectly tested)
 - [ ] Rewrite of buildsystem (for some reason `make rebuild -j` does not work)
-- [ ] Rewrite of `Fifo` (especially an `emplace()` function via variadic templates)
+- [x] Rewrite of `Fifo` (especially an `emplace()` function via variadic templates)
 
 ## How to use
 Every project has to be located in the `projects` directory. Simply create a new folder and copy the
