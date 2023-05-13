@@ -14,6 +14,7 @@
 #include <optional>
 #include <utility>
 
+#include "atomic.h"
 #include "err.h"
 
 template<typename T, size_t N>
@@ -24,10 +25,10 @@ public:
 
     err::Err push(const T& val) noexcept
     {
-        if (used_elems >= N)
+        if (used_elems.get() >= N)
             return err::Err::NoMem;
 
-        buf[head] = val;
+        buf[head.get()] = val;
         inc_used();
 
         return err::Err::Ok;
@@ -36,10 +37,10 @@ public:
     template<typename... Args>
     err::Err emplace(Args&&... args) noexcept
     {
-        if (used_elems >= N)
+        if (used_elems.get() >= N)
             return err::Err::NoMem;
 
-        new(&buf[head])T{std::forward<Args>(args)...};
+        new(&buf[head.get()])T{std::forward<Args>(args)...};
         inc_used();
 
         return err::Err::Ok;
@@ -47,27 +48,27 @@ public:
 
     std::expected<T, err::Err> peek() noexcept
     {
-        if (used_elems == 0)
+        if (used_elems.get() == 0)
             return std::unexpected{err::Err::Empty};
 
-        return std::expected<T, err::Err>{buf[tail]};
+        return std::expected<T, err::Err>{buf[tail.get()]};
     }
 
     std::expected<std::reference_wrapper<T>, err::Err> peek_ref() noexcept
     {
-        if (used_elems == 0)
+        if (used_elems.get() == 0)
             return std::unexpected{err::Err::Empty};
 
         return std::expected<std::reference_wrapper<T>, err::Err>{
-            std::reference_wrapper<T>{buf[tail]}};
+            std::reference_wrapper<T>{buf[tail.get()]}};
     }
 
     std::expected<T, err::Err> pop_elem() noexcept
     {
-        if (used_elems == 0)
+        if (used_elems.get() == 0)
             return std::unexpected{err::Err::Empty};
 
-        T ret = buf[tail];
+        T ret = buf[tail.get()];
         dec_used();
 
         return std::expected<T, err::Err>{ret};
@@ -75,37 +76,37 @@ public:
 
     err::Err pop() noexcept
     {
-        if (used_elems == 0)
+        if (used_elems.get() == 0)
             return err::Err::Empty;
 
         dec_used();
         return err::Err::Ok;
     }
 
-    size_t used() const noexcept { return used_elems; }
-    size_t free() const noexcept { return N - used_elems; }
-    bool is_full() const noexcept { return used_elems == N; }
-    bool is_empty() const noexcept { return used_elems == 0; }
+    size_t used() const noexcept { return used_elems.get(); }
+    size_t free() const noexcept { return N - used_elems.get(); }
+    bool is_full() const noexcept { return used_elems.get() == N; }
+    bool is_empty() const noexcept { return used_elems.get() == 0; }
 
 private:
     inline void inc_used() noexcept
     {
         used_elems++;
-        head = head + 1;
-        if (head >= N)
-            head = 0;
+        size_t new_head = head++;
+        if (new_head >= N)
+            head.set(0);
     }
 
     inline void dec_used() noexcept
     {
         used_elems--;
-        tail = tail + 1;
-        if (tail >= N)
-            tail = 0;
+        size_t new_tail = tail++;
+        if (new_tail >= N)
+            tail.set(0);
     }
 
     std::array<T, N> buf;
-    size_t used_elems;
-    volatile size_t head;
-    volatile size_t tail;
+    Atomic<size_t> used_elems;
+    Atomic<size_t> head;
+    Atomic<size_t> tail;
 };
