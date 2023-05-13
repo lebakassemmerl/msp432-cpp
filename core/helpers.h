@@ -10,6 +10,9 @@
 #include <concepts>
 #include <cstdint>
 #include <cstddef>
+#include <span>
+
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 
 namespace hlp {
 template <typename T> requires std::unsigned_integral<T>
@@ -34,5 +37,15 @@ constexpr T mask(size_t bit_high, size_t bit_low)
     return step2 & step3;
 }
 
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
+template<typename T> requires std::integral<T>
+constexpr size_t to_hex(std::span<char> text, T val) noexcept
+{
+    const char LOOKUP[] = "0123456789ABCDEF";
+
+    size_t chars = std::min(text.size(), sizeof(T) * 2);
+    for (size_t i = chars; i > 0; i--, val >>= 4)
+        text[i - 1] = LOOKUP[val & 0x0F];
+
+    return chars;
+}
 }
