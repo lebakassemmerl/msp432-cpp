@@ -45,13 +45,13 @@ extern void periph_int_handler(void);
 void __attribute__((weak)) hard_fault(void)
 {
     while (true)
-        asm("nop");
+        __asm__("nop");
 }
 
 void __attribute__((weak)) unhandled_interrupt(void)
 {
     while (true)
-        asm("nop");
+        __asm__("nop");
 }
 
 static void do_constructors(void)
@@ -102,7 +102,7 @@ void init_platform(void)
 void reset_handler(void)
 {
     // first, initialize stack pointer
-    asm("ldr sp, =_estack");
+    __asm__("ldr sp, =_estack");
 
     // after the stack pointer is initialized correctly, initialize the RAM 
     init_ram();

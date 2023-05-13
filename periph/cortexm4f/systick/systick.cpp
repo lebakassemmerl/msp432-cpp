@@ -32,7 +32,7 @@ void Systick::delay_ms(uint32_t delay) const noexcept
 {
     uint64_t until = up + ((uint64_t)delay);
     while (until > up)
-        asm ("nop");
+        __asm__("nop");
 }
 
 uint64_t Systick::uptime_ms() const noexcept

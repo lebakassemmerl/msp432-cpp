@@ -57,12 +57,12 @@ void Msp432::enable_interrupts() noexcept
     m_cortexm4f.nvic().disable_all_interrupts();
     m_cortexm4f.nvic().clear_all_pending();
     m_cortexm4f.nvic().enable_all_interrupts();
-    asm("CPSIE I"); // enable global interrupts
+    __asm__("CPSIE I"); // enable global interrupts
 }
 
 void Msp432::disable_interrupts() noexcept
 {
     m_cortexm4f.nvic().disable_all_interrupts();
-    asm("CPSID I"); // disable global interrupts
+    __asm__("CPSID I"); // disable global interrupts
 }
 

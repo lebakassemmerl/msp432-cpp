@@ -13,7 +13,7 @@ namespace cm4f {
 inline uint32_t get_fpscr(void)
 {
     uint32_t ret;
-    asm volatile (
+    __asm__ __volatile__(
         "VMRS %0, fpscr"
         : "=r" (ret)
         ::);
@@ -23,7 +23,7 @@ inline uint32_t get_fpscr(void)
 
 inline void set_fpscr(uint32_t val)
 {
-    asm volatile (
+    __asm__ __volatile__(
         "VMSR fpscr, %0"
         :: "r" (val)
         :  "vfpcc");
