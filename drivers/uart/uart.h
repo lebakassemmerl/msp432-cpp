@@ -37,7 +37,7 @@ private:
     void queue_tx_job() noexcept;
 
     bool initialized;
-    Fifo<std::span<uint8_t>, 16> tx_jobs;
+    Fifo<std::span<uint8_t>, 32> tx_jobs;
     Usci<UsciARegisters>& usci;
     uint32_t baud;
 
