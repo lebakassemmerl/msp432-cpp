@@ -19,7 +19,6 @@ things are still working already:
 - [ ] A proper way to describe the defined bitfield-values of the peripheral registers
 - [ ] FPU support
 - [ ] Missing peripheral drivers
-- [/] Atomic instructions (basic functionality working but not perfectly tested)
 - [ ] Rewrite of buildsystem (for some reason `make rebuild -j` does not work)
 - [x] Rewrite of `Fifo` (especially an `emplace()` function via variadic templates)
 
