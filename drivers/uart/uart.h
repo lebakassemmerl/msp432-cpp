@@ -24,8 +24,8 @@ public:
         : initialized(false), tx_jobs(), usci(usci), baud(baud), tx_dma(dma[tx_dma_chan]),
         rx_dma(dma[rx_dma_chan]), tx_dma_src(tx_dma_src), rx_dma_src(rx_dma_src) {}
 
-    err::Err init(const Cs& cs) noexcept;
-    err::Err write(std::span<uint8_t> data) noexcept;
+    Err init(const Cs& cs) noexcept;
+    Err write(std::span<uint8_t> data) noexcept;
 private:
     static void redirect_tx_handler(
         const uint8_t* src_buf, uint8_t* dst_buf, size_t len, void* instance) noexcept;

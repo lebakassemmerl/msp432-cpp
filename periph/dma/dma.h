@@ -95,11 +95,11 @@ struct DmaConfig {
 
 class DmaChannel {
 public:
-    err::Err setup(const DmaConfig& conf) noexcept;
+    Err setup(const DmaConfig& conf) noexcept;
     bool transfer_going() noexcept { return info.busy; }
-    err::Err transfer_mem_to_periph(const uint8_t* src, uint8_t* dst, uint32_t len) noexcept;
-    err::Err transfer_periph_to_mem(const uint8_t* src, uint8_t* dst, uint32_t len) noexcept;
-    err::Err transfer_custom(const uint8_t* src, uint8_t* dst, DmaPtrIncrement src_incr,
+    Err transfer_mem_to_periph(const uint8_t* src, uint8_t* dst, uint32_t len) noexcept;
+    Err transfer_periph_to_mem(const uint8_t* src, uint8_t* dst, uint32_t len) noexcept;
+    Err transfer_custom(const uint8_t* src, uint8_t* dst, DmaPtrIncrement src_incr,
         DmaPtrIncrement dst_incr, uint32_t len) noexcept;
 
     friend class Dma;

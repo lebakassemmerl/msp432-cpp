@@ -15,13 +15,13 @@
 #include "dma.h"
 
 
-err::Err DmaChannel::setup(const DmaConfig& conf) noexcept
+Err DmaChannel::setup(const DmaConfig& conf) noexcept
 {
     if (in_use)
-        return err::Err::AlreadyInitialized;
+        return Err::AlreadyInitialized;
 
     if (!conf.done || !conf.instance)
-        return err::Err::NullPtr;
+        return Err::NullPtr;
 
     this->conf = conf;
     ctrl_prim.ctrl.modify(
@@ -34,22 +34,22 @@ err::Err DmaChannel::setup(const DmaConfig& conf) noexcept
     reg().chx_srccfg[idx].set(conf.src_chan % (MAX_SRC_NR + 1));
 
     in_use = true;
-    return err::Err::Ok;
+    return Err::Ok;
 }
 
-err::Err DmaChannel::transfer_mem_to_periph(const uint8_t* src, uint8_t* dst, uint32_t len) noexcept
+Err DmaChannel::transfer_mem_to_periph(const uint8_t* src, uint8_t* dst, uint32_t len) noexcept
 {
     if (!in_use)
-        return err::Err::NotInitialized;
+        return Err::NotInitialized;
 
     if ((!src) || (!dst))
-        return err::Err::NullPtr;
+        return Err::NullPtr;
 
     if (len == 0)
-        return err::Err::Empty;
+        return Err::Empty;
 
     if (info.busy)
-        return err::Err::Busy;
+        return Err::Busy;
 
     info.busy = true;
 
@@ -74,22 +74,22 @@ err::Err DmaChannel::transfer_mem_to_periph(const uint8_t* src, uint8_t* dst, ui
     config_prim_channel(len);
     enable_channel();
 
-    return err::Err::Ok;
+    return Err::Ok;
 }
 
-err::Err DmaChannel::transfer_periph_to_mem(const uint8_t* src, uint8_t* dst, uint32_t len) noexcept
+Err DmaChannel::transfer_periph_to_mem(const uint8_t* src, uint8_t* dst, uint32_t len) noexcept
 {
     if (!in_use)
-        return err::Err::NotInitialized;
+        return Err::NotInitialized;
 
     if ((!src) || (!dst))
-        return err::Err::NullPtr;
+        return Err::NullPtr;
 
     if (len == 0)
-        return err::Err::Empty;
+        return Err::Empty;
 
     if (info.busy)
-        return err::Err::Busy;
+        return Err::Busy;
 
     info.busy = true;
 
@@ -114,23 +114,23 @@ err::Err DmaChannel::transfer_periph_to_mem(const uint8_t* src, uint8_t* dst, ui
     config_prim_channel(len);
     enable_channel();
 
-    return err::Err::Ok;
+    return Err::Ok;
 }
 
-err::Err DmaChannel::transfer_custom(const uint8_t* src, uint8_t* dst, DmaPtrIncrement src_incr,
+Err DmaChannel::transfer_custom(const uint8_t* src, uint8_t* dst, DmaPtrIncrement src_incr,
     DmaPtrIncrement dst_incr, uint32_t num_bytes) noexcept
 {
     if (!in_use)
-        return err::Err::NotInitialized;
+        return Err::NotInitialized;
 
     if ((!src) || (!dst))
-        return err::Err::NullPtr;
+        return Err::NullPtr;
 
     if (num_bytes == 0)
-        return err::Err::Empty;
+        return Err::Empty;
 
     if (info.busy)
-        return err::Err::Busy;
+        return Err::Busy;
 
     info.busy = true;
 
@@ -160,7 +160,7 @@ err::Err DmaChannel::transfer_custom(const uint8_t* src, uint8_t* dst, DmaPtrInc
     config_prim_channel(num_bytes);
     enable_channel();
 
-    return err::Err::Ok;
+    return Err::Ok;
 }
 
 void DmaChannel::calc_remaining_words(size_t num_bytes) noexcept

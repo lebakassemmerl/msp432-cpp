@@ -29,9 +29,9 @@ public:
         mode(mode), usci(usci), tx_dma(dma[tx_dma_chan]), rx_dma(dma[rx_dma_chan]),
         tx_dma_src(tx_dma_src), rx_dma_src(rx_dma_src), job_fifo() {}
 
-    err::Err init(const Cs& cs) noexcept
+    Err init(const Cs& cs) noexcept
     {
-        err::Err ret;
+        Err ret;
         uint16_t pol = static_cast<uint16_t>(mode) & 0x01;
         uint16_t ph = (static_cast<uint16_t>(mode) & 0x02) >> 1;
         uint32_t smclk = cs.sm_clk();
@@ -76,7 +76,7 @@ public:
             SpiMaster::redirect_int_handler
         });
 
-        if (ret != err::Err::Ok)
+        if (ret != Err::Ok)
             return ret;
 
         ret = rx_dma.setup(DmaConfig{
@@ -87,19 +87,19 @@ public:
             reinterpret_cast<void*>(this),
             SpiMaster::redirect_int_handler
         });
-        if (ret != err::Err::Ok)
+        if (ret != Err::Ok)
             return ret;
 
         initialized = true;
-        return err::Err::Ok;
+        return Err::Ok;
     }
-    err::Err write(std::span<uint8_t> data, void* context, SpiCallback cb) noexcept
+    Err write(std::span<uint8_t> data, void* context, SpiCallback cb) noexcept
     {
         if (data.empty() == 0)
-            return err::Err::Empty;
+            return Err::Empty;
 
         if (job_fifo.free() == 0)
-            return err::Err::NoMem;
+            return Err::NoMem;
 
         job_fifo.emplace(SpiJob{
             SpiTransferType::Write,
@@ -115,16 +115,16 @@ public:
             start_transmission();
         }
 
-        return err::Err::Ok;
+        return Err::Ok;
     }
 
-    err::Err read(std::span<uint8_t> buffer, void* context, SpiCallback cb) noexcept
+    Err read(std::span<uint8_t> buffer, void* context, SpiCallback cb) noexcept
     {
         if (buffer.empty() == 0)
-            return err::Err::Empty;
+            return Err::Empty;
 
         if (job_fifo.free() == 0)
-            return err::Err::NoMem;
+            return Err::NoMem;
 
         job_fifo.emplace(SpiJob{
             SpiTransferType::Read,
@@ -140,17 +140,17 @@ public:
             start_transmission();
         }
 
-        return err::Err::Ok;
+        return Err::Ok;
     }
 
-    err::Err write_read(std::span<uint8_t> txbuf, std::span<uint8_t> rxbuf, void* context,
+    Err write_read(std::span<uint8_t> txbuf, std::span<uint8_t> rxbuf, void* context,
         SpiCallback cb) noexcept
     {
         if (txbuf.empty() || rxbuf.empty())
-            return err::Err::Empty;
+            return Err::Empty;
 
         if (job_fifo.free() == 0)
-            return err::Err::NoMem;
+            return Err::NoMem;
 
         job_fifo.emplace(SpiJob{
             SpiTransferType::WriteRead,
@@ -166,7 +166,7 @@ public:
             start_transmission();
         }
 
-        return err::Err::Ok;
+        return Err::Ok;
     }
 
 

@@ -9,7 +9,6 @@
 
 #include <cstdint>
 
-namespace err {
 enum class Err : uint8_t {
     Ok = 0,
     NotOk,
@@ -26,7 +25,7 @@ enum class Err : uint8_t {
     NullPtr,
 };
 
-constexpr const char* to_string(const Err& err) noexcept {
+constexpr const char* err_to_string(const Err& err) noexcept {
     switch (err) {
     case Err::Ok: return "Ok";
     case Err::NotOk: return "NotOk";
@@ -43,6 +42,4 @@ constexpr const char* to_string(const Err& err) noexcept {
     case Err::NullPtr: return "NullPtr";
     default: return "No valid errorcode";
     }
-}
-
 }

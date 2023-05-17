@@ -61,9 +61,9 @@ constexpr BaudFraction BAUD_FRACTIONS[36] = {
     BaudFraction { .frac = 60869, .reg_val = 0xFE },
 };
 
-err::Err Uart::init(const Cs& cs) noexcept
+Err Uart::init(const Cs& cs) noexcept
 {
-    err::Err ret;
+    Err ret;
 
     auto& regs = usci.reg();
 
@@ -126,31 +126,31 @@ err::Err Uart::init(const Cs& cs) noexcept
     rx_cfg.done = Uart::redirect_rx_handler;
 
     ret = tx_dma.setup(tx_cfg);
-    if (ret != err::Err::Ok)
+    if (ret != Err::Ok)
         return ret;
 
     ret = rx_dma.setup(rx_cfg);
-    if (ret != err::Err::Ok)
+    if (ret != Err::Ok)
         return ret;
 
     initialized = true;
-    return err::Err::Ok;
+    return Err::Ok;
 }
 
-err::Err Uart::write(std::span<uint8_t> data) noexcept
+Err Uart::write(std::span<uint8_t> data) noexcept
 {
     if (!initialized)
-        return err::Err::NotInitialized;
+        return Err::NotInitialized;
 
     if (tx_jobs.is_full())
-        return err::Err::NoMem;
+        return Err::NoMem;
 
     tx_jobs.emplace(data);
 
     if (!tx_dma.transfer_going())
         queue_tx_job();
 
-    return err::Err::Ok;
+    return Err::Ok;
 }
 
 void Uart::queue_tx_job() noexcept

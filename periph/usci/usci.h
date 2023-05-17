@@ -32,15 +32,15 @@ public:
         return *reinterpret_cast<T*>(reg_base);
     }
 
-    err::Err register_irq_handler(void (*fn)(void*) noexcept, void *inst) noexcept
+    Err register_irq_handler(void (*fn)(void*) noexcept, void *inst) noexcept
     {
         if ((!inst) || (!fn))
-            return err::Err::NullPtr;
+            return Err::NullPtr;
 
         irq_handler = fn;
         instance = inst;
 
-        return err::Err::Ok;
+        return Err::Ok;
     }
 
     // Needed for the SPI implementation
