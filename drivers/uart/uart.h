@@ -12,7 +12,7 @@
 
 #include "cs.h"
 #include "err.h"
-#include "fifo.h"
+#include "dma_fifo.h"
 #include "pin.h"
 #include "usci.h"
 #include "uscia_regs.h"
@@ -21,7 +21,7 @@ class Uart {
 public:
     consteval explicit Uart(Usci<UsciARegisters>& usci, Dma& dma, size_t baud, uint8_t tx_dma_chan,
         uint8_t rx_dma_chan, uint8_t tx_dma_src, uint8_t rx_dma_src) noexcept
-        : initialized(false), tx_jobs(), usci(usci), baud(baud), tx_dma(dma[tx_dma_chan]),
+        : initialized(false), tx_fifo(), usci(usci), baud(baud), tx_dma(dma[tx_dma_chan]),
         rx_dma(dma[rx_dma_chan]), tx_dma_src(tx_dma_src), rx_dma_src(rx_dma_src) {}
 
     Err init(const Cs& cs) noexcept;
@@ -37,7 +37,7 @@ private:
     void queue_tx_job() noexcept;
 
     bool initialized;
-    Fifo<std::span<uint8_t>, 32> tx_jobs;
+    DmaFifo<uint8_t, 512> tx_fifo;
     Usci<UsciARegisters>& usci;
     uint32_t baud;
 

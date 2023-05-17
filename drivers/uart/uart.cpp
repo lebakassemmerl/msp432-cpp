@@ -142,10 +142,10 @@ Err Uart::write(std::span<uint8_t> data) noexcept
     if (!initialized)
         return Err::NotInitialized;
 
-    if (tx_jobs.is_full())
+    if (tx_fifo.is_full())
         return Err::NoMem;
 
-    tx_jobs.emplace(data);
+    tx_fifo.put_range(data);
 
     if (!tx_dma.transfer_going())
         queue_tx_job();
@@ -155,10 +155,10 @@ Err Uart::write(std::span<uint8_t> data) noexcept
 
 void Uart::queue_tx_job() noexcept
 {
-    if (tx_jobs.is_empty())
+    if (tx_fifo.is_empty())
         return;
 
-    std::span<uint8_t> job = tx_jobs.peek().value();
+    std::span<uint8_t> job = tx_fifo.peek_range();
     tx_dma.transfer_mem_to_periph(
         job.data(), reinterpret_cast<uint8_t*>(&usci.reg().txbuf), job.size());
 }
@@ -179,7 +179,7 @@ void Uart::redirect_rx_handler(
 
 void Uart::tx_handler(const uint8_t* buf, size_t len) noexcept
 {
-    tx_jobs.pop();
+    tx_fifo.drop_range();
     queue_tx_job();
 }
 
