@@ -3,6 +3,28 @@
 /*
  * Created by lebakassemmerl 2022
  * E-Mail: hotschi@gmx.at
+ * 
+ * This file implements a single producer / single consumer FIFO in form of a ringbuffer. Intended
+ * usage is for example a queue within a bus-driver (e.g. SPI). It is designed with a lockfree
+ * approach but I am ABSOLUTELY NOT SURE if there aren't any bugs inside (probably there are).
+ * However was tested with the test test/test_fifo.cpp. If it is used in a different way than
+ * intended, it probably will result in undefined behavior!
+ * 
+ * Producer-functions:
+ * - push()
+ * - emplace()
+ * 
+ * Consumer functions:
+ * - peek()
+ * - peek_ref()
+ * - pop_elem()
+ * - pop()
+ * 
+ * Functions for both:
+ * - used()
+ * - free()
+ * - is_full()
+ * - is_empty()
  */
 
 #pragma once
@@ -13,98 +35,127 @@
 #include <functional>
 #include <cstddef>
 #include <optional>
+#include <iostream>
 #include <utility>
 
 #include "err.h"
+#include "helpers.h"
 
 template<typename T, size_t N>
 class Fifo {
 public:
-    constexpr Fifo() noexcept : used_elems(0), head(0), tail(0) {}
+    static_assert(hlp::is_powerof2<N>(), "N must be power of 2");
+
+    constexpr explicit Fifo() noexcept : buf(), head(0), tail(0) {}
     constexpr ~Fifo() noexcept {}
 
-    err::Err push(const T& val) noexcept
+    Err push(const T& val) noexcept
     {
-        if (used_elems.load() >= N)
-            return err::Err::NoMem;
+        if (is_full())
+            return Err::NoMem;
 
+        // We have to copy in the value before incrementing the head-pointer since otherwise it can
+        // happen, that the consumer is reading out the data before we copied it into the FIFO.
         buf[head.load()] = val;
-        inc_used();
+        fetch_add(head, 1);
 
-        return err::Err::Ok;
+        return Err::Ok;
     }
 
     template<typename... Args>
-    err::Err emplace(Args&&... args) noexcept
+    Err emplace(Args&&... args) noexcept
     {
-        if (used_elems.load() >= N)
-            return err::Err::NoMem;
+        if (is_full())
+            return Err::NoMem;
 
-        new(&buf[head.load()])T{std::forward<Args>(args)...};
-        inc_used();
+        // same explaination as in push()
+        new(&buf[head.load()]) T{std::forward<Args>(args)...};
+        fetch_add(head, 1);
 
-        return err::Err::Ok;
+        return Err::Ok;
     }
 
-    std::expected<T, err::Err> peek() noexcept
+    std::expected<T, Err> peek() noexcept
     {
-        if (used_elems.load() == 0)
-            return std::unexpected{err::Err::Empty};
+        if (is_empty())
+            return std::unexpected{Err::Empty};
 
-        return std::expected<T, err::Err>{buf[tail.load()]};
+        // This function can only work properly (without ending in undefined behavior) if this FIFO
+        // is used as a single producer / single consumer data-structure. Otherwise the referenced
+        // object from the FIFO cannot be valid since the tail-pointer could change and the
+        // head-pointer too.
+        return std::expected<T, Err>{buf[tail.load()]};
     }
 
-    std::expected<std::reference_wrapper<T>, err::Err> peek_ref() noexcept
+    std::expected<std::reference_wrapper<T>, Err> peek_ref() noexcept
     {
-        if (used_elems.load() == 0)
-            return std::unexpected{err::Err::Empty};
+        if (is_empty())
+            return std::unexpected{Err::Empty};
 
-        return std::expected<std::reference_wrapper<T>, err::Err>{
+        // same explaination as in peek()
+        return std::expected<std::reference_wrapper<T>, Err>{
             std::reference_wrapper<T>{buf[tail.load()]}};
     }
 
-    std::expected<T, err::Err> pop_elem() noexcept
+    std::expected<T, Err> pop_elem() noexcept
     {
-        if (used_elems.load() == 0)
-            return std::unexpected{err::Err::Empty};
+        size_t old;
+        size_t ny;
+        T ret;
 
-        T ret = buf[tail.load()];
-        dec_used();
+        if (is_empty())
+            return std::unexpected{Err::Empty};
 
-        return std::expected<T, err::Err>{ret};
+        old = tail.load(std::memory_order::seq_cst);
+        do {
+            // Since we are only copying data out of the buffer, this should be okay and not destroy
+            // anything within the FIFO. We try to copy out the data until we get a valid
+            // tail-pointer.
+            ret = buf[old];
+            ny = (old + 1) & (N - 1);
+        } while (!tail.compare_exchange_weak(old, ny, std::memory_order::seq_cst));
+
+        return std::expected<T, Err>{ret};
     }
 
-    err::Err pop() noexcept
+    Err pop() noexcept
     {
-        if (used_elems.load() == 0)
-            return err::Err::Empty;
+        if (is_empty())
+            return Err::Empty;
 
-        dec_used();
-        return err::Err::Ok;
+        // we only need to update the tail-pointer for popping out an element
+        fetch_add(tail, 1);
+        return Err::Ok;
     }
 
-    size_t used() const noexcept { return used_elems.load(); }
-    size_t free() const noexcept { return N - used_elems.load(); }
-    bool is_full() const noexcept { return used_elems.load() == N; }
-    bool is_empty() const noexcept { return used_elems.load() == 0; }
+    inline bool is_full() const noexcept { return used() == (N - 1); }
+    inline bool is_empty() const noexcept { return used() == 0; }
+    inline size_t free() const noexcept { return (N - 1 - used()); }
+    inline size_t used() const noexcept
+    {
+        // To get the 'worst-case-scenario', where it is more likely that the queue is full, we have
+        // to read tail first.
+        size_t t = tail.load(std::memory_order::seq_cst);
+        size_t h = head.load(std::memory_order::seq_cst);
+
+        if (h >= t)
+            return h - t;
+        else
+            return N + h - t;
+    }
 
 private:
-    inline void inc_used() noexcept
+    inline void fetch_add(std::atomic<size_t>& a, size_t val) noexcept
     {
-        used_elems++;
-        if (++head >= N)
-            head.store(0);
-    }
+        size_t ny;
+        size_t old = a.load(std::memory_order::seq_cst);
 
-    inline void dec_used() noexcept
-    {
-        used_elems--;
-        if (++tail >= N)
-            tail.store(0);
+        do {
+            ny = (old + val) & (N - 1);
+        } while (!a.compare_exchange_weak(old, ny, std::memory_order::seq_cst));
     }
 
     std::array<T, N> buf;
-    std::atomic<size_t> used_elems;
     std::atomic<size_t> head;
     std::atomic<size_t> tail;
 };
