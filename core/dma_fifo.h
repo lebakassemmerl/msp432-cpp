@@ -30,7 +30,7 @@
 #include "helpers.h"
 #include "libc.h"
 
-template<typename T, size_t N> requires std::integral<T>
+template<typename T, size_t N>
 class DmaFifo {
 public:
     static_assert(hlp::is_powerof2<N>(), "N must be power of 2");
@@ -45,15 +45,17 @@ public:
         if (free() < data.size())
             return Err::NoMem;
 
-        h = fetch_add(head, data.size());
+        h = head.load();
 
         if ((h + data.size()) > N) {
             size_t tmp = N - h;
-            libc::memcpy(&buf[h], &data[0], tmp);
-            libc::memcpy(&buf[0], &data[tmp], (data.size() * sizeof(data[0])) - tmp);
+            libc::memcpy(&buf[h], &data[0], tmp * sizeof(data[0]));
+            libc::memcpy(&buf[0], &data[tmp], (data.size() - tmp) * sizeof(data[0]));
         } else {
             libc::memcpy(&buf[h], data.data(), data.size() * sizeof(data[0]));
         }
+
+        fetch_add(head, data.size());
 
         return Err::Ok;
     }
@@ -85,9 +87,9 @@ public:
     // must only be called from the consumer!
     void drop_range() noexcept { tail.store(range_end, std::memory_order::seq_cst); }
 
-    inline size_t free() const noexcept { return (N - 1 - used()); }
-    inline bool is_full() const noexcept { return used() ==  (N - 1); }
+    inline bool is_full() const noexcept { return used() == (N - 1); }
     inline bool is_empty() const noexcept { return used() == 0; }
+    inline size_t free() const noexcept { return (N - 1 - used()); }
     inline size_t used() const noexcept
     {
         // read tail first, since this could be touched by an interrupt
@@ -100,8 +102,9 @@ public:
             return N + h - t;
     }
 
+    constexpr size_t size() const noexcept { return N - 1; }
 private:
-    inline size_t fetch_add(std::atomic<size_t>& a, size_t val) noexcept
+    inline void fetch_add(std::atomic<size_t>& a, size_t val) noexcept
     {
         size_t ny;
         size_t old = a.load(std::memory_order::seq_cst);
@@ -109,8 +112,6 @@ private:
         do {
             ny = (old + val) & (N - 1);
         } while (!a.compare_exchange_weak(old, ny, std::memory_order::seq_cst));
-
-        return old;
     }
 
     std::array<T, N> buf;
