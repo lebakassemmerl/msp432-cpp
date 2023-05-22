@@ -76,7 +76,8 @@ Err Uart::init(const Cs& cs) noexcept
         + usciaregs::ctlw0::ssel.value(3)       // use SMCLK as clock-source for the UART
         + usciaregs::ctlw0::sevenbit.value(0)   // disable 7-bit mode
         + usciaregs::ctlw0::spb.value(0)        // use 1 stop-bit
-        + usciaregs::ctlw0::pen.value(0));      // disable parity bits
+        + usciaregs::ctlw0::pen.value(0)        // disable parity bits
+    );
 
     // the following calculation is done using the formulars in the datasheet on page 915
     uint64_t n_scaled = static_cast<uint64_t>(cs.sm_clk() / baud) << BaudFraction::SHIFT;

@@ -23,11 +23,11 @@ enum class SpiTransferType : uint8_t {
     None,
     Write,
     Read,
-    WriteRead
+    WriteRead,
 };
 
 typedef void (*SpiCallback)(
     SpiTransferType type,
     std::span<uint8_t> txbuf,
     std::span<uint8_t> rxbuf,
-    void *context);
+    void* context);

@@ -93,6 +93,7 @@ public:
         initialized = true;
         return Err::Ok;
     }
+
     Err write(std::span<uint8_t> data, void* context, SpiCallback cb) noexcept
     {
         if (data.empty() == 0)
@@ -169,7 +170,6 @@ public:
         return Err::Ok;
     }
 
-
     uint32_t get_actual_freq_hz() const noexcept { return actual_freq; }
     uint32_t get_desired_freq_hz() const noexcept { return desired_freq; }
 private:
@@ -178,7 +178,7 @@ private:
         uint8_t* txbuf;
         uint8_t* rxbuf;
         size_t len;
-        void *context;
+        void* context;
         SpiCallback cb;
 
         constexpr explicit SpiJob() noexcept

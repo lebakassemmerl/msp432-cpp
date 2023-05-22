@@ -35,7 +35,6 @@
 #include <functional>
 #include <cstddef>
 #include <optional>
-#include <iostream>
 #include <utility>
 
 #include "err.h"

@@ -19,11 +19,11 @@ extern "C" {
         constexpr int INT_SIZE = sizeof(unsigned);
 
         unsigned val_big = 0;
-        for (int i = 0; i < INT_SIZE; i++)
-            val_big += ((unsigned)val) << (i * 8);
-
         uint8_t* str_small;
         size_t i;
+
+        for (int i = 0; i < INT_SIZE; i++)
+            val_big += static_cast<unsigned>(val) << (i * 8);
 
         for (i = 0; i < (nr_bytes / INT_SIZE); i++)
             reinterpret_cast<uint32_t*>(str)[i] = val_big;
