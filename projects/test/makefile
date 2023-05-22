@@ -16,6 +16,7 @@ PERIPHERALS += \
 	msp432
 
 DRIVERS += \
+	led \
 	spi \
 	uart
 
