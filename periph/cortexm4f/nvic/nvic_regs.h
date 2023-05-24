@@ -21,20 +21,15 @@ public:
     NvicRegisters(NvicRegisters&&) = delete;
     ~NvicRegisters() = delete;
 
-    ReadWrite<uint32_t> iser0;
-    ReadWrite<uint32_t> iser1;
+    ReadWrite<uint32_t> iser[2];
     Reserved<uint32_t> _reserved3[30];
-    ReadWrite<uint32_t> icer0;
-    ReadWrite<uint32_t> icer1;
+    ReadWrite<uint32_t> icer[2];
     Reserved<uint32_t> _reserved4[30];
-    ReadWrite<uint32_t> ispr0;
-    ReadWrite<uint32_t> ispr1;
+    ReadWrite<uint32_t> ispr[2];
     Reserved<uint32_t> _reserved5[30];
-    ReadWrite<uint32_t> icpr0;
-    ReadWrite<uint32_t> icpr1;
+    ReadWrite<uint32_t> icpr[2];
     Reserved<uint32_t> _reserved6[30];
-    ReadOnly<uint32_t> iabr0;
-    ReadOnly<uint32_t> iabr1;
+    ReadOnly<uint32_t> iabr[2];
     Reserved<uint32_t> _reserved7[62];
     ReadWrite<uint32_t> ipr[16];
 };

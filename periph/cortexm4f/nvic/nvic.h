@@ -26,6 +26,7 @@ public:
     void enable_all_interrupts() noexcept;
     void disable_all_interrupts() noexcept;
     void clear_all_pending() noexcept;
+    void clear_pending(size_t idx) noexcept;
 
     friend class CortexM4F;
 private:
