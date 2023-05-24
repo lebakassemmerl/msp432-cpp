@@ -225,9 +225,9 @@ def main():
     OUT_DIR = "out"
 
     try:
-        parser = SVDParser.for_xml_file("../../msp432.svd")
+        parser = SVDParser.for_xml_file("../../msp432p4xx.svd")
     except:
-        parser = SVDParser.for_xml_file("msp432.svd")
+        parser = SVDParser.for_xml_file("msp432p4xx.svd")
 
     if not os.path.exists(OUT_DIR):
         os.mkdir(OUT_DIR)

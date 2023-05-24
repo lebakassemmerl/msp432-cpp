@@ -210,8 +210,8 @@ private:
             break;
         case SpiTransferType::Read:
             rx_dma.transfer_periph_to_mem(rxreg, job.rxbuf, job.len);
-            // We want to transmit the same idle byte 'job.len' times since SPI is must also write data
-            // to the bus although it's only reading.
+            // We want to transmit the same idle byte 'job.len' times since SPI is must also write
+            // data to the bus although it's only reading.
             tx_dma.transfer_custom(&TX_IDLE, txreg, DmaPtrIncrement::NoIncr,
                 DmaPtrIncrement::NoIncr, job.len);
             break;
