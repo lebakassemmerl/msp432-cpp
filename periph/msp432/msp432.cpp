@@ -21,13 +21,13 @@ Msp432 Msp432::chip{};
 
 void Msp432::init() noexcept
 {
-    // Don't enable the FPU (yet) since it causes for some reason a hardfault when compiling with
-    // optimizations.
-    // m_cortexm4f.scb().enable_fpu();
-
     init_clock();
     start_systick();
     m_dma.init();
+
+    m_cortexm4f.fpu().enable();
+    m_cortexm4f.fpu().set_rounding_mode(Fpu::RoundingMode::Nearest);
+
     enable_interrupts();
 }
 
