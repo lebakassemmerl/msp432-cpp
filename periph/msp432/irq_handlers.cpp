@@ -33,9 +33,9 @@ void hard_fault(void) noexcept
 
 void fpu_handler(void) noexcept
 {
-    // FIXME: currently we do not care about any FPU exceptions at all.
-    // uint32_t fpscr = cm4f::get_fpscr();
-    cm4f::set_fpscr(0);
+    constexpr size_t FLOAT_IRQ_NR = 4; // see startup.cpp
+    Msp432::instance().cortexm4f().nvic().clear_pending(FLOAT_IRQ_NR);
+    Msp432::instance().cortexm4f().fpu().handle_interrupt();
 }
 
 void periph_int_handler(void) noexcept
