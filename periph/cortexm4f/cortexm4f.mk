@@ -14,6 +14,7 @@ INCLUDES += \
 
 SRCS += \
 	$(CORTEXM4F_DIR)/cortexm4f.cpp \
-	$(CORTEXM4F_DIR)/systick/systick.cpp \
+	$(CORTEXM4F_DIR)/fpu/fpu.cpp \
 	$(CORTEXM4F_DIR)/nvic/nvic.cpp \
-	$(CORTEXM4F_DIR)/scb/scb.cpp
+	$(CORTEXM4F_DIR)/scb/scb.cpp \
+	$(CORTEXM4F_DIR)/systick/systick.cpp
