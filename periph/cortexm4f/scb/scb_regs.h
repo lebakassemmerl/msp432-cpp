@@ -53,8 +53,6 @@ public:
     ReadOnly<uint32_t> isar2;
     ReadOnly<uint32_t> isar3;
     ReadOnly<uint32_t> isar4;
-    Reserved<uint32_t> _reserved9[5];
-    ReadWrite<uint32_t> cpacr;
 };
 #pragma pack()
 
@@ -228,9 +226,5 @@ namespace scbregs {
         constexpr BitField<uint32_t> barrier_instrs{19, 16};
         constexpr BitField<uint32_t> syncprim_instrs_frac{23, 20};
         constexpr BitField<uint32_t> psr_m_instrs{27, 24};
-    }
-    namespace cpacr {
-        constexpr BitField<uint32_t> cp11{23, 22};
-        constexpr BitField<uint32_t> cp10{21, 20};
     }
 }

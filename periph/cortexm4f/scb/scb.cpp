@@ -17,12 +17,6 @@ void SystemControlBlock::set_vector_table_offset(uint32_t offset) noexcept
     reg().vtor.set(offset << 10);
 }
 
-void SystemControlBlock::enable_fpu() noexcept
-{
-    reg().cpacr.modify(scbregs::cpacr::cp10.value(3) + scbregs::cpacr::cp11.value(3));
-    cm4f::set_fpscr(0);
-}
-
 CpuInfo SystemControlBlock::get_cpu_info() const noexcept
 {
     CpuInfo info{};

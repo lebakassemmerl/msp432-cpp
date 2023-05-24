@@ -29,7 +29,6 @@ public:
     constexpr ~SystemControlBlock() noexcept {}
 
     void set_vector_table_offset(uint32_t offset) noexcept;
-    void enable_fpu() noexcept;
     CpuInfo get_cpu_info() const noexcept;
 
     friend class CortexM4F;
