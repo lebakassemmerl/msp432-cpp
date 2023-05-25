@@ -18,6 +18,8 @@
 #include "gpio.h"
 #include "pcm.h"
 #include "sysctl.h"
+#include "timer32.h"
+#include "timer32_regs.h"
 #include "usci.h"
 #include "uscia_regs.h"
 #include "uscib_regs.h"
@@ -51,6 +53,9 @@ public:
     constexpr Usci<UsciBRegisters>& uscib2() noexcept { return m_uscib2; }
     constexpr Usci<UsciBRegisters>& uscib3() noexcept { return m_uscib3; }
 
+    constexpr Timer32& t32_1() noexcept { return m_t32_1; }
+    constexpr Timer32& t32_2() noexcept { return m_t32_2; }
+
     void init() noexcept;
     void delay_ms(uint32_t delay) noexcept { m_cortexm4f.systick().delay_ms(delay); }
     void enable_interrupts() noexcept;
@@ -60,8 +65,8 @@ private:
     consteval explicit Msp432() noexcept
         : m_cortexm4f(), m_cs(), m_dma(), m_flctl(), m_pins(), m_pcm(), m_sysctl(), m_wdt(), 
         m_uscia0(USCIA0_BASE), m_uscia1(USCIA1_BASE), m_uscia2(USCIA2_BASE), m_uscia3(USCIA3_BASE),
-        m_uscib0(USCIB0_BASE), m_uscib1(USCIB1_BASE), m_uscib2(USCIB2_BASE), m_uscib3(USCIB3_BASE)
-        {}
+        m_uscib0(USCIB0_BASE), m_uscib1(USCIB1_BASE), m_uscib2(USCIB2_BASE), m_uscib3(USCIB3_BASE),
+        m_t32_1(TIMER32_1_BASE), m_t32_2(TIMER32_2_BASE) {}
 
     void start_systick() noexcept;
     void init_clock() noexcept;
@@ -82,4 +87,6 @@ private:
     Usci<UsciBRegisters> m_uscib1;
     Usci<UsciBRegisters> m_uscib2;
     Usci<UsciBRegisters> m_uscib3;
+    Timer32 m_t32_1;
+    Timer32 m_t32_2;
 };

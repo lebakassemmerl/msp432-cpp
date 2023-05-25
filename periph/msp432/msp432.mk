@@ -20,5 +20,6 @@ PERIPHERALS += \
 	gpio \
 	pcm \
 	sysctl \
+	timer32 \
 	usci \
 	wdt
