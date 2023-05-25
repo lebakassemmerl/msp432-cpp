@@ -17,11 +17,11 @@ things are still working already:
 
 ## What has to be done
 - [ ] A proper way to describe the defined bitfield-values of the peripheral registers
-- [ ] FPU support
+- [x] FPU support
 - [ ] Missing peripheral drivers
 - [ ] Rewrite of buildsystem (for some reason `make rebuild -j` does not work)
 - [x] Rewrite of `Fifo` (especially an `emplace()` function via variadic templates)
-- [ ] Integrate Testcases into build-system
+- [/] Integrate Testcases into build-system
 
 ## How to use
 Every project has to be located in the `projects` directory. Simply create a new folder and copy the
