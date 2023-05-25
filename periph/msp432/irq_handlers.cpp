@@ -61,6 +61,8 @@ void periph_int_handler(void) noexcept
         case 21: msp.uscib1().handle_interrupt(); break;
         case 22: msp.uscib2().handle_interrupt(); break;
         case 23: msp.uscib3().handle_interrupt(); break;
+        case 25: msp.t32_1().handle_interrupt(); break;
+        case 26: msp.t32_2().handle_interrupt(); break;
         case 30: msp.dma().handle_interrupt(-1); break; // error interrupt
         case 31: msp.dma().handle_interrupt(0); break;
         case 32: msp.dma().handle_interrupt(1); break;
