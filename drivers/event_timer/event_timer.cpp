@@ -24,7 +24,7 @@ void EventTimer::init(const Cs& cs) noexcept
 }
 
 std::expected<EventTimer::Event, Err> EventTimer::register_event(
-    uint16_t interval_ms, void (*elapsed_cb)(void* cookie) noexcept, void* cookie) noexcept
+    uint16_t interval_ms, void* cookie, void (*elapsed_cb)(void* cookie) noexcept) noexcept
 {
     uint8_t idx;
 

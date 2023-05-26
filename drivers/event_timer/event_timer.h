@@ -25,6 +25,9 @@ class EventTimer {
 public:
     class Event {
     public:
+        // allow creating an invalid instance of an event
+        constexpr explicit Event() noexcept : ev(0xFF) {}
+
         // moving the event is okay since the event is still valid then
         constexpr Event(const Event&& other) noexcept : ev(std::move(other.ev)) {}
 
@@ -32,10 +35,17 @@ public:
         // event-ID to 0xFF which is an invalid value.
         constexpr Event(Event&& other) noexcept : ev(std::exchange(other.ev, 0xFF)) {}
 
+        // move-assignement is also allowed
+        constexpr Event& operator=(const Event&& other) noexcept
+        {
+            ev = std::move(other.ev);
+            return *this;
+        }
+
         // we don't want an event to be copied or modifed
         Event(const Event&) = delete;
         Event& operator=(const Event&) = delete;
-        constexpr Event& operator=(const Event&& other) = delete;
+
         friend class EventTimer;
     private:
         constexpr explicit Event(uint8_t idx) noexcept : ev(idx) {}
@@ -50,7 +60,7 @@ public:
     Err start_event(const Event& ev) noexcept;
     Err stop_event(const Event& ev) noexcept;
     std::expected<EventTimer::Event, Err> register_event(
-        uint16_t interval_ms, void (*elapsed_cb)(void* cookie) noexcept, void* cookie) noexcept;
+        uint16_t interval_ms, void* cookie, void (*elapsed_cb)(void* cookie) noexcept) noexcept;
 private:
     struct EventEntry {
         constexpr explicit EventEntry() noexcept
