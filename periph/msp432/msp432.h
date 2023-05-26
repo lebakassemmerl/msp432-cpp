@@ -57,7 +57,7 @@ public:
     constexpr Timer32& t32_2() noexcept { return m_t32_2; }
 
     void init() noexcept;
-    void delay_ms(uint32_t delay) noexcept { m_cortexm4f.systick().delay_ms(delay); }
+    void delay_ms(uint32_t delay) noexcept;
     void enable_interrupts() noexcept;
     void disable_interrupts() noexcept;
 private:
@@ -68,7 +68,6 @@ private:
         m_uscib0(USCIB0_BASE), m_uscib1(USCIB1_BASE), m_uscib2(USCIB2_BASE), m_uscib3(USCIB3_BASE),
         m_t32_1(TIMER32_1_BASE), m_t32_2(TIMER32_2_BASE) {}
 
-    void start_systick() noexcept;
     void init_clock() noexcept;
 
     CortexM4F m_cortexm4f;

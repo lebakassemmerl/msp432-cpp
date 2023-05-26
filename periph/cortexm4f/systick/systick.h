@@ -22,7 +22,6 @@ public:
 
     void start(uint32_t clk) noexcept;
     void stop() noexcept;
-    void delay_ms(uint32_t delay) const noexcept;
 
     uint64_t uptime_ms() const noexcept;
 

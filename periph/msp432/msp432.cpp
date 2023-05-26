@@ -22,11 +22,12 @@ Msp432 Msp432::chip{};
 void Msp432::init() noexcept
 {
     init_clock();
-    start_systick();
-    m_dma.init();
 
+    m_cortexm4f.systick().start(m_cs.m_clk());
     m_cortexm4f.fpu().enable();
     m_cortexm4f.fpu().set_rounding_mode(Fpu::RoundingMode::Nearest);
+
+    m_dma.init();
 
     enable_interrupts();
 }
@@ -47,10 +48,6 @@ void Msp432::init_clock() noexcept
     cs().set_aclk_32khz();
 }
 
-void Msp432::start_systick() noexcept
-{
-    m_cortexm4f.systick().start(m_cs.m_clk());
-}
 
 void Msp432::enable_interrupts() noexcept
 {
@@ -66,3 +63,9 @@ void Msp432::disable_interrupts() noexcept
     __asm__("CPSID I"); // disable global interrupts
 }
 
+void Msp432::delay_ms(uint32_t delay) noexcept
+{
+    uint64_t until = m_cortexm4f.systick().uptime_ms() + static_cast<uint64_t>(delay);
+    while (until > m_cortexm4f.systick().uptime_ms())
+        __asm__("nop");
+}

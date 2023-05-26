@@ -28,13 +28,6 @@ void Systick::stop() noexcept
     reg().stcsr.modify(systickregs::stcsr::tickint.value(0) + systickregs::stcsr::enable.value(0));
 }
 
-void Systick::delay_ms(uint32_t delay) const noexcept
-{
-    uint64_t until = up + ((uint64_t)delay);
-    while (until > up)
-        __asm__("nop");
-}
-
 uint64_t Systick::uptime_ms() const noexcept
 {
     return up;
