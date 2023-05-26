@@ -52,8 +52,8 @@ int main(void)
     led_blue.init();
 
     ev_timer.init(chip.cs());
-    auto event250 = ev_timer.register_event(250, ev_cb, &led_red).value();
-    auto event125 = ev_timer.register_event(125, ev_cb, &led_blue).value();
+    auto event250 = ev_timer.register_event(250, &led_red, ev_cb).value();
+    auto event125 = ev_timer.register_event(125, &led_blue, ev_cb).value();
     ev_timer.start_event(event250);
     ev_timer.start_event(event125);
 
