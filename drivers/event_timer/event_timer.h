@@ -25,15 +25,21 @@ class EventTimer {
 public:
     class Event {
     public:
-        // we don't want an event to be copied
-        constexpr explicit Event(uint8_t idx) noexcept : ev(idx) {}
+        // moving the event is okay since the event is still valid then
+        constexpr Event(const Event&& other) noexcept : ev(std::move(other.ev)) {}
 
+        // If we call a move constructor on a non-constant reference, we additionally set the
+        // event-ID to 0xFF which is an invalid value.
+        constexpr Event(Event&& other) noexcept : ev(std::exchange(other.ev, 0xFF)) {}
+
+        // we don't want an event to be copied or modifed
         Event(const Event&) = delete;
         Event& operator=(const Event&) = delete;
-        constexpr Event(const Event&& other) noexcept : ev(std::move(other.ev)) {}
         constexpr Event& operator=(const Event&& other) = delete;
         friend class EventTimer;
     private:
+        constexpr explicit Event(uint8_t idx) noexcept : ev(idx) {}
+
         uint8_t ev;
     };
 
