@@ -45,63 +45,6 @@ private:
 };
 
 template<typename T> requires std::unsigned_integral<T>
-class ReadWrite {
-public:
-    ReadWrite() = delete;
-    ReadWrite(const ReadWrite<T>&) = delete;
-    ReadWrite(const ReadWrite<T>&&) = delete;
-    ReadWrite<T>& operator=(const ReadWrite<T>&) = delete;
-    ReadWrite<T>& operator=(const ReadWrite<T>&&) = delete;
-    ~ReadWrite() = delete;
-
-    constexpr void set(T val) noexcept { reg = val; }
-    constexpr void set(const BitField<T>& bf) { reg = bf.get_value(); }
-    constexpr T get() const noexcept { return reg; }
-    constexpr volatile T& get_ref() volatile noexcept { return reg; }
-
-    constexpr void modify(const BitField<T>& b)
-    {
-        set((get() & ~b.mask()) | b.get_value());
-    }
-
-private:
-    volatile T reg;
-};
-
-template<typename T> requires std::unsigned_integral<T>
-class WriteOnly {
-public:
-    WriteOnly() = delete;
-    WriteOnly(const WriteOnly<T>&) = delete;
-    WriteOnly(const WriteOnly<T>&&) = delete;
-    WriteOnly<T>& operator=(const WriteOnly<T>&) = delete;
-    WriteOnly<T>& operator=(const WriteOnly<T>&&) = delete;
-    ~WriteOnly() = delete;
-
-    constexpr void set(T val) noexcept { reg = val; }
-    constexpr void set(const BitField<T>& bf) { reg = bf.get_value(); }
-
-private:
-    volatile T reg;
-};
-
-template<typename T> requires std::unsigned_integral<T>
-class ReadOnly {
-public:
-    ReadOnly() = delete;
-    ReadOnly(const ReadOnly<T>&) = delete;
-    ReadOnly(const ReadOnly<T>&&) = delete;
-    ReadOnly<T>& operator=(const ReadOnly<T>&) = delete;
-    ReadOnly<T>& operator=(const ReadOnly<T>&&) = delete;
-    ~ReadOnly() = delete;
-
-    constexpr T get() const noexcept { return reg; }
-
-private:
-    volatile T reg;
-};
-
-template<typename T> requires std::unsigned_integral<T>
 class Reserved {
 public:
     Reserved() = delete;
@@ -111,8 +54,33 @@ public:
     Reserved<T>& operator=(const Reserved<T>&&) = delete;
     ~Reserved() = delete;
 
-private:
+protected:
     volatile T reg;
+};
+
+template<typename T> requires std::unsigned_integral<T>
+class WriteOnly : public Reserved<T> {
+public:
+    constexpr void set(T val) noexcept { this->reg = val; }
+    constexpr void set(const BitField<T>& bf) { this->reg = bf.get_value(); }
+};
+
+template<typename T> requires std::unsigned_integral<T>
+class ReadOnly : public Reserved<T> {
+public:
+    constexpr T get() const noexcept { return this->reg; }
+};
+
+// to avoid virtual inheritance, we only inherit from WriteOnly and implement the get function twice
+template<typename T> requires std::unsigned_integral<T>
+class ReadWrite : public WriteOnly<T> {
+public:
+    constexpr T get() const noexcept { return this->reg; }
+    constexpr volatile T& get_ref() volatile noexcept { return this->reg; }
+    constexpr void modify(const BitField<T>& b)
+    {
+        this->set((get() & ~b.mask()) | b.get_value());
+    }
 };
 
 template<typename T> requires std::unsigned_integral<T>
