@@ -43,15 +43,15 @@ public:
     constexpr SysCtl& sysctl() noexcept { return m_sysctl; }
     constexpr Wdt& wdt() noexcept { return m_wdt; }
 
-    constexpr Usci<UsciARegisters>& uscia0() noexcept { return m_uscia0; }
-    constexpr Usci<UsciARegisters>& uscia1() noexcept { return m_uscia1; }
-    constexpr Usci<UsciARegisters>& uscia2() noexcept { return m_uscia2; }
-    constexpr Usci<UsciARegisters>& uscia3() noexcept { return m_uscia3; }
+    constexpr UsciA& uscia0() noexcept { return m_uscia0; }
+    constexpr UsciA& uscia1() noexcept { return m_uscia1; }
+    constexpr UsciA& uscia2() noexcept { return m_uscia2; }
+    constexpr UsciA& uscia3() noexcept { return m_uscia3; }
 
-    constexpr Usci<UsciBRegisters>& uscib0() noexcept { return m_uscib0; }
-    constexpr Usci<UsciBRegisters>& uscib1() noexcept { return m_uscib1; }
-    constexpr Usci<UsciBRegisters>& uscib2() noexcept { return m_uscib2; }
-    constexpr Usci<UsciBRegisters>& uscib3() noexcept { return m_uscib3; }
+    constexpr UsciB& uscib0() noexcept { return m_uscib0; }
+    constexpr UsciB& uscib1() noexcept { return m_uscib1; }
+    constexpr UsciB& uscib2() noexcept { return m_uscib2; }
+    constexpr UsciB& uscib3() noexcept { return m_uscib3; }
 
     constexpr Timer32& t32_1() noexcept { return m_t32_1; }
     constexpr Timer32& t32_2() noexcept { return m_t32_2; }
@@ -78,14 +78,14 @@ private:
     Pcm m_pcm;
     SysCtl m_sysctl;
     Wdt m_wdt;
-    Usci<UsciARegisters> m_uscia0;
-    Usci<UsciARegisters> m_uscia1;
-    Usci<UsciARegisters> m_uscia2;
-    Usci<UsciARegisters> m_uscia3;
-    Usci<UsciBRegisters> m_uscib0;
-    Usci<UsciBRegisters> m_uscib1;
-    Usci<UsciBRegisters> m_uscib2;
-    Usci<UsciBRegisters> m_uscib3;
+    UsciA m_uscia0;
+    UsciA m_uscia1;
+    UsciA m_uscia2;
+    UsciA m_uscia3;
+    UsciB m_uscib0;
+    UsciB m_uscib1;
+    UsciB m_uscib2;
+    UsciB m_uscib3;
     Timer32 m_t32_1;
     Timer32 m_t32_2;
 };

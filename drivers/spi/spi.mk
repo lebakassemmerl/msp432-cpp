@@ -8,3 +8,4 @@
 SPI_DIR = $(ROOT)/drivers/spi
 
 INCLUDES += $(SPI_DIR)
+SRCS += $(SPI_DIR)/spi_master.cpp \

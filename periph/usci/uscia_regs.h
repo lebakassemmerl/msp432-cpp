@@ -39,7 +39,8 @@ public:
 };
 #pragma pack()
 
-static_assert(std::is_standard_layout<UsciARegisters>::value, "UsciARegisters isn't standard layout");
+static_assert(std::is_standard_layout<UsciARegisters>::value, 
+    "UsciARegisters isn't standard layout");
 
 constexpr size_t USCIA0_BASE = 0x40001000;
 constexpr size_t USCIA1_BASE = 0x40001400;
