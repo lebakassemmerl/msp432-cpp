@@ -36,6 +36,7 @@ CXXFLAGS := \
 	-fno-threadsafe-statics \
 	-nostdlib \
 	-ffreestanding \
+	-fno-rtti \
 	-nostartfiles \
 	-nodefaultlibs \
 	-fno-exceptions \

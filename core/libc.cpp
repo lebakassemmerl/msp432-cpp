@@ -55,6 +55,12 @@ extern "C" {
         return dst;
     }
 
+    void __cxa_pure_virtual()
+    {
+        // Gets called if a pure virtual function (without override) is invoked.
+        // FIXME: for now, simply do nothing
+    }
+
     // we are not dealing with threads but since we have no std-lib we need this function call
     // for destructors of global instances
     int atexit(void (*func)(void))
