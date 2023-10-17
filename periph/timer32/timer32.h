@@ -16,15 +16,13 @@
 
 class Timer32 {
 public:
-    void init() noexcept;
+    Err init(void (*callback)(void *cookie) noexcept, void* cookie) noexcept;
     Err start() noexcept;
     void stop() noexcept;
-
-    Err set_callback(void (*callback)(void *cookie) noexcept, void* cookie) noexcept;
     Err set_frequency(uint32_t freq_hz, const Cs& cs) noexcept;
 
     inline uint32_t get_frequency() const noexcept { return freq; }
-    inline bool is_running() noexcept { return (status & STATUS_RUNNING) > 0;}
+    inline bool is_running() noexcept { return (status & STATUS_RUNNING) > 0; }
     inline bool is_initialized() noexcept { return (status & STATUS_INITIALIZED) > 0; }
 
     friend class Msp432;

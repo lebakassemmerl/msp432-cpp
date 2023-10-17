@@ -12,24 +12,16 @@
 #include "timer32.h"
 #include "timer32_regs.h"
 
-Err Timer32::set_callback(void (*callback)(void *cookie) noexcept, void* cookie) noexcept
+Err Timer32::init(void (*callback)(void *cookie) noexcept, void* cookie) noexcept
 {
-    if (is_running())
-        return Err::Busy;
+    if (is_initialized())
+        return Err::Ok;
 
     if (!callback)
         return Err::NullPtr;
 
     this->cb = callback;
     this->cookie = cookie;
-
-    return Err::Ok;
-}
-
-void Timer32::init() noexcept
-{
-    if (is_initialized())
-        return;
 
     reg().control.modify(
         timer32regs::control::mode.value(1)         // periodic mode
@@ -40,6 +32,7 @@ void Timer32::init() noexcept
     );
 
     status |= STATUS_INITIALIZED;
+    return Err::Ok;
 }
 
 Err Timer32::set_frequency(uint32_t freq_hz, const Cs& cs) noexcept
