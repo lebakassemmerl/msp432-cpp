@@ -37,6 +37,7 @@
 #include <optional>
 #include <utility>
 
+#include "bitmap.h"
 #include "err.h"
 #include "helpers.h"
 
@@ -45,18 +46,24 @@ class Fifo {
 public:
     static_assert(hlp::is_powerof2<N>(), "N must be power of 2");
 
-    constexpr explicit Fifo() noexcept : buf(), head(0), tail(0) {}
+    constexpr explicit Fifo() noexcept : buf(), ready(), head(0), tail(0) {}
     constexpr ~Fifo() noexcept {}
 
     Err push(const T& val) noexcept
     {
+        size_t idx;
+
         if (is_full())
             return Err::NoMem;
 
-        // We have to copy in the value before incrementing the head-pointer since otherwise it can
-        // happen, that the consumer is reading out the data before we copied it into the FIFO.
+        // 1st, we increment the head-index in order to reserve space within the FIFO
+        idx = fetch_add(head, 1);
+
+        // after reserving the space, we actually copy the data
         buf[head.load()] = val;
-        fetch_add(head, 1);
+
+        // when the copying is done, we mark the slot as ready
+        ready.set(idx);
 
         return Err::Ok;
     }
@@ -64,19 +71,26 @@ public:
     template<typename... Args>
     Err emplace(Args&&... args) noexcept
     {
+        size_t idx;
+
         if (is_full())
             return Err::NoMem;
 
+        // 1st, we increment the head-index in order to reserve space within the FIFO
+        idx = fetch_add(head, 1);
+    
         // same explaination as in push()
         new(&buf[head.load()]) T{std::forward<Args>(args)...};
-        fetch_add(head, 1);
+        
+        // when the copying is done, we mark the slot as ready
+        ready.set(idx);
 
         return Err::Ok;
     }
 
     std::expected<T, Err> peek() noexcept
     {
-        if (is_empty())
+        if (!can_dequeue())
             return std::unexpected{Err::Empty};
 
         // This function can only work properly (without ending in undefined behavior) if this FIFO
@@ -88,12 +102,21 @@ public:
 
     std::expected<std::reference_wrapper<T>, Err> peek_ref() noexcept
     {
-        if (is_empty())
+        size_t idx;
+
+        if (!can_dequeue())
             return std::unexpected{Err::Empty};
 
-        // same explaination as in peek()
-        return std::expected<std::reference_wrapper<T>, Err>{
-            std::reference_wrapper<T>{buf[tail.load()]}};
+        // if the FIFO is not empty, we first get the index to the next valid element
+        idx = tail.load(std::memory_order::acquire);
+
+        // after getting the index, we check it the slot is ready
+        if (ready.test(idx)) {
+            return std::expected<std::reference_wrapper<T>, Err>{
+                std::reference_wrapper<T>{buf[idx]}};
+        } else {
+            return std::unexpected{Err::Busy};
+        }
     }
 
     std::expected<T, Err> pop_elem() noexcept
@@ -102,7 +125,7 @@ public:
         size_t ny;
         T ret;
 
-        if (is_empty())
+        if (!can_dequeue())
             return std::unexpected{Err::Empty};
 
         old = tail.load(std::memory_order::seq_cst);
@@ -114,16 +137,23 @@ public:
             ny = (old + 1) & (N - 1);
         } while (!tail.compare_exchange_weak(old, ny, std::memory_order::seq_cst));
 
+        // after 'pulling' out the data from the FIFO, set the ready bit back to 0
+        ready.clear(old);
         return std::expected<T, Err>{ret};
     }
 
     Err pop() noexcept
     {
-        if (is_empty())
+        size_t idx;
+
+        if (!can_dequeue())
             return Err::Empty;
 
-        // we only need to update the tail-pointer for popping out an element
-        fetch_add(tail, 1);
+        // increment the index..
+        idx = fetch_add(tail, 1);
+        // ..then clear the corresponding ready bit
+        ready.clear(idx);
+
         return Err::Ok;
     }
 
@@ -143,8 +173,28 @@ public:
             return N + h - t;
     }
 
+    inline bool can_dequeue() const noexcept
+    {
+        // To get the 'worst-case-scenario', where it is more likely that the queue is full, we have
+        // to read tail first.
+        size_t t = tail.load(std::memory_order::seq_cst);
+        size_t h = head.load(std::memory_order::seq_cst);
+        bool not_empty;
+
+        if (h >= t)
+            not_empty = (h - t) > 0;
+        else
+            not_empty = (N + h - t) > 0;
+
+        // if the FIFO is not empty, we check if the next pending element is ready
+        if (not_empty)
+            return ready.test(t).value();
+        else
+            return false;
+    }
+
 private:
-    inline void fetch_add(std::atomic<size_t>& a, size_t val) noexcept
+    inline size_t fetch_add(std::atomic<size_t>& a, size_t val) noexcept
     {
         size_t ny;
         size_t old = a.load(std::memory_order::seq_cst);
@@ -152,9 +202,12 @@ private:
         do {
             ny = (old + val) & (N - 1);
         } while (!a.compare_exchange_weak(old, ny, std::memory_order::seq_cst));
+
+        return old;
     }
 
     std::array<T, N> buf;
+    Bitmap<N> ready;
     std::atomic<size_t> head;
     std::atomic<size_t> tail;
 };
