@@ -14,7 +14,7 @@
 
 #include "../core/dma_fifo.h"
 
-constexpr uint64_t MAX_VAL = 10000000;
+constexpr uint64_t MAX_VAL = 60000000;
 constexpr size_t SIZE = 128;
 
 DmaFifo<uint64_t, SIZE> fifo{};
@@ -51,7 +51,7 @@ void consumer()
         if (fifo.is_empty())
             continue;
 
-        data = fifo.peek_range();
+        data = fifo.peek_range().value();
 
         for (size_t i = 0; i < data.size(); i++, compare++) {
             if (data[i] != compare) {

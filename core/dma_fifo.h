@@ -22,8 +22,8 @@
 
 #include <array>
 #include <atomic>
-#include <concepts>
 #include <cstddef>
+#include <expected>
 #include <span>
 
 #include "err.h"
@@ -41,11 +41,18 @@ public:
     // must only be called from the producer!
     Err put_range(std::span<T> data) noexcept
     {
+        size_t oldhead;
+        size_t nw;
         size_t h;
+
         if (free() < data.size())
             return Err::NoMem;
 
-        h = head.load();
+        // first, we increment 'tmphead' in order to reserve the amount of bytes we need
+        h = tmphead.load(std::memory_order::relaxed);
+        do {
+            nw = (h + data.size()) & (N - 1);
+        } while (!tmphead.compare_exchange_weak(h, nw, std::memory_order::seq_cst));
 
         if ((h + data.size()) > N) {
             size_t tmp = N - h;
@@ -55,19 +62,27 @@ public:
             libc::memcpy(&buf[h], data.data(), data.size() * sizeof(data[0]));
         }
 
-        fetch_add(head, data.size());
+        // check if we are the application or the interrupt-thread
+        oldhead = head.load(std::memory_order::seq_cst);
+        if (oldhead == h) {
+            // we are the 1st / only thread -> we have to update 'head' accordingly
+            nw = tmphead.load(std::memory_order::seq_cst);
+            head.store(nw, std::memory_order::seq_cst);
+        }
+
+        // if (oldhead != h): we are the interrupt-thread -> we don't have to do anything here
 
         return Err::Ok;
     }
 
     // must only be called from the consumer!
-    std::span<T> peek_range() noexcept
+    std::expected<std::span<T>, Err> peek_range() noexcept
     {
         size_t h;
         size_t t;
 
         if (is_empty())
-            return std::span<T>{};
+            return std::unexpected{Err::Empty};
 
         // load head first, since we are the consumer
         h = head.load(std::memory_order::seq_cst);
@@ -75,12 +90,12 @@ public:
 
         if (h > t) {
             range_end = h; // the currently returned range ends where head is right now
-            return std::span<T>{&buf[t], h - t};
+            return std::expected<std::span<T>, Err>{std::span<T>{&buf[t], h - t}};
         } else {
             // The contiguous memory ends at the end of the buffer -> return everything from tail to
             // the end of the buffer.
             range_end = 0;
-            return std::span<T>{&buf[t], N - t};
+            return std::expected<std::span<T>, Err>{std::span<T>{&buf[t], N - t}};
         }
     }
 
@@ -104,18 +119,10 @@ public:
 
     constexpr size_t size() const noexcept { return N - 1; }
 private:
-    inline void fetch_add(std::atomic<size_t>& a, size_t val) noexcept
-    {
-        size_t ny;
-        size_t old = a.load(std::memory_order::seq_cst);
-
-        do {
-            ny = (old + val) & (N - 1);
-        } while (!a.compare_exchange_weak(old, ny, std::memory_order::seq_cst));
-    }
 
     std::array<T, N> buf;
     volatile size_t range_end;
+    std::atomic<size_t> tmphead;
     std::atomic<size_t> head;
     std::atomic<size_t> tail;
 };

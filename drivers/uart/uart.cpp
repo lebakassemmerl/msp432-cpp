@@ -159,7 +159,7 @@ void Uart::queue_tx_job() noexcept
     if (tx_fifo.is_empty())
         return;
 
-    std::span<uint8_t> job = tx_fifo.peek_range();
+    std::span<uint8_t> job = tx_fifo.peek_range().value();
     tx_dma.transfer_mem_to_periph(
         job.data(), reinterpret_cast<uint8_t*>(&usci.reg().txbuf), job.size());
 }
