@@ -54,7 +54,8 @@ public:
 
     Err init() noexcept
     {
-        if (spi.get_desired_freq_hz() == 6'000'000) {
+        uint32_t spi_freq = spi.get_actual_freq_hz();
+        if ((spi_freq >= SPI_FREQ_HZ_MIN) && (spi_freq <= SPI_FREQ_HZ_MAX)) {
             initialized = true;
             return Err::Ok;
         } else {
@@ -136,9 +137,15 @@ public:
     }
 
 private:
-    static constexpr size_t WORDS_PER_LED = 24 / 4; // 24 bytes = 6uint32
-    static constexpr uint32_t ZERO = 0xE0; // 3 highest bits are '1'
-    static constexpr uint32_t ONE = 0xF8; // 5 highest bits are '1'
+    // Minimum an maximum frequency to satisfy the required timing defined in the spec. For
+    // calculation details look at the spec (https://cdn-shop.adafruit.com/datasheets/WS2812B.pdf)
+    // and the provided python-script 'timing_calc.py'.
+    static constexpr uint32_t SPI_FREQ_HZ_MIN = 5'600'000;
+    static constexpr uint32_t SPI_FREQ_HZ_MAX = 7'000'000;
+
+    static constexpr size_t WORDS_PER_LED = 24 / 4; // 24 bytes = 6 uint32
+    static constexpr uint32_t ZERO = 0b11100000;
+    static constexpr uint32_t ONE = 0b11111000;
 
     // we calculate a lookup-table in for encoding 4 bits into the framebuffer
     static constexpr std::array<uint32_t, 16> LUT = [] () {
