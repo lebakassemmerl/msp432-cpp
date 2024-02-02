@@ -18,17 +18,17 @@
 #include "spi.h"
 #include "spi_master.h"
 #include "uart.h"
+#include "w2812b.h"
 #include "wdt.h"
-
-#define charptr_to_span(ptr) \
-    std::span{reinterpret_cast<uint8_t*>(const_cast<char*>(ptr)), ARRAY_SIZE(ptr) - 1}
 
 Msp432& chip = Msp432::instance();
 Uart uart0{chip.uscia0(), chip.dma(), 115200, 0, 1, 1, 1};
-SpiMaster spi1{chip.uscib1(), chip.dma(), SpiMode::Cpol0Cphase0, 1000000, 2, 3, 2, 2};
+SpiMaster spi1{chip.uscib1(), chip.dma(), SpiMode::Cpol0Cphase0, 6000000, 2, 3, 2, 2};
+W2812B<100> ledstrip{spi1};
 
 int main(void)
 {
+    uint8_t green = 0;
     chip.init();
 
     // UART0 pins
@@ -50,13 +50,20 @@ int main(void)
     btn1.make_input();
     btn1.set_pull_mode(PullMode::PullUp);
 
-    uart0.write(charptr_to_span("\r\nHallo erstmal!\r\n"));
+    uart0.write("\r\nHallo erstmal!\r\n");
+    ledstrip.init();
+    ledstrip.set_color_for_all_leds(Rgb{0xFF, 0, 0});
+
     while (true) {
         if (!btn1.read())
             led_blue.toggle();
 
+        ledstrip.set_color_for_all_leds(Rgb{0, green, 0});
+        ledstrip.refresh_leds();
+
+        green += 10;
         led_green.toggle();
-        uart0.write(charptr_to_span("\r\nTest write."));
+        uart0.write("\r\nTest write.");
         chip.delay_ms(500);
     }
 }

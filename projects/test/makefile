@@ -18,7 +18,8 @@ PERIPHERALS += \
 DRIVERS += \
 	led \
 	spi \
-	uart
+	uart \
+	w2812b
 
 INCLUDES += $(PROJ_DIR)
 SRCS += $(wildcard $(PROJ_DIR)/*.cpp)

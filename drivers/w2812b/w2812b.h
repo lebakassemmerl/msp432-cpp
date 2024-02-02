@@ -182,7 +182,7 @@ private:
         std::span<uint8_t> rxbuf,
         void* context) noexcept
     {
-        W2812B<N>* instance = context;
+        W2812B<N>* instance = reinterpret_cast<W2812B<N>*>(context);
         instance->handle_spi_cb();
     }
 
