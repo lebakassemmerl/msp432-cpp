@@ -5,7 +5,9 @@
  * E-Mail: hotschi@gmx.at
  */
 
+#include <cstdint>
 #include <span>
+#include <string_view>
 
 #include "cs.h"
 #include "dma.h"
@@ -152,6 +154,13 @@ Err Uart::write(std::span<uint8_t> data) noexcept
         queue_tx_job();
 
     return Err::Ok;
+}
+
+Err Uart::write(std::string_view text) noexcept
+{
+    char* ptr{const_cast<char*>(text.data())};
+    std::span<uint8_t> span{reinterpret_cast<uint8_t*>(ptr), text.size()};
+    return write(span);
 }
 
 void Uart::queue_tx_job() noexcept

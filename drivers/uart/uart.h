@@ -9,6 +9,7 @@
 
 #include <cstdint>
 #include <span>
+#include <string_view>
 
 #include "cs.h"
 #include "err.h"
@@ -26,6 +27,7 @@ public:
 
     Err init(const Cs& cs) noexcept;
     Err write(std::span<uint8_t> data) noexcept;
+    Err write(std::string_view text) noexcept;
 private:
     static void redirect_tx_handler(
         const uint8_t* src_buf, uint8_t* dst_buf, size_t len, void* instance) noexcept;
