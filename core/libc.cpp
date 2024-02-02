@@ -55,6 +55,18 @@ extern "C" {
         return dst;
     }
 
+    size_t strlen(const char* str)
+    {
+        size_t len = 0;
+
+        while (*str) {
+            str++;
+            len++;
+        }
+
+        return len;
+    }
+
     void __cxa_pure_virtual()
     {
         // Gets called if a pure virtual function (without override) is invoked.

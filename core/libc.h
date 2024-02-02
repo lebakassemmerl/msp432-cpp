@@ -14,5 +14,6 @@ namespace libc {
 extern "C" {
     void* memset(void* str, uint8_t val, size_t nr_bytes);
     void* memcpy(void* dst, const void* src, size_t nr_bytes);
+    size_t strlen(const char* str);
 }
 }
