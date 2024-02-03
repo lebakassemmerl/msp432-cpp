@@ -23,7 +23,7 @@
 
 Msp432& chip = Msp432::instance();
 Uart uart0{chip.uscia0(), chip.dma(), 115200, 0, 1, 1, 1};
-SpiMaster spi1{chip.uscib1(), chip.dma(), SpiMode::Cpol0Cphase0, 6000000, 2, 3, 2, 2};
+SpiMaster spi1{chip.uscib1(), chip.dma(), SpiMode::Cpol0Cphase0, 6'000'000, 2, 3, 2, 2};
 W2812B<100> ledstrip{spi1};
 
 int main(void)
@@ -38,9 +38,9 @@ int main(void)
     uart0.init(chip.cs());
     spi1.init(chip.cs());
 
-    Led led_red = Led(chip.gpio_pins().int_pin(IntPinNr::P02_0), false);
-    Led led_green = Led(chip.gpio_pins().int_pin(IntPinNr::P02_1), false);
-    Led led_blue = Led(chip.gpio_pins().int_pin(IntPinNr::P02_2), false);
+    Led led_red = Led{chip.gpio_pins().int_pin(IntPinNr::P02_0), false};
+    Led led_green = Led{chip.gpio_pins().int_pin(IntPinNr::P02_1), false};
+    Led led_blue = Led{chip.gpio_pins().int_pin(IntPinNr::P02_2), false};
     Pin& btn1 = chip.gpio_pins().int_pin(IntPinNr::P01_1);
 
     led_red.init();
@@ -53,6 +53,7 @@ int main(void)
     uart0.write("\r\nHallo erstmal!\r\n");
     ledstrip.init();
     ledstrip.set_color_for_all_leds(Rgb{0xFF, 0, 0});
+    ledstrip.refresh_leds();
 
     while (true) {
         if (!btn1.read())
