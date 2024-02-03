@@ -20,9 +20,6 @@
 #include "uart.h"
 #include "wdt.h"
 
-#define charptr_to_span(ptr) \
-    std::span{reinterpret_cast<uint8_t*>(const_cast<char*>(ptr)), ARRAY_SIZE(ptr) - 1}
-
 Msp432& chip = Msp432::instance();
 Uart uart0{chip.uscia0(), chip.dma(), 115200, 0, 1, 1, 1};
 EventTimer ev_timer{chip.t32_1()};
@@ -57,7 +54,7 @@ int main(void)
     ev_timer.start_event(event250);
     ev_timer.start_event(event125);
 
-    uart0.write(charptr_to_span("\r\nTimer test\r\n"));
+    uart0.write("\r\nTimer test\r\n");
     while (true) {
         //led_green.toggle();
         chip.delay_ms(500);
