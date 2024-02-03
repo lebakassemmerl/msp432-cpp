@@ -104,12 +104,12 @@ void reset_handler(void)
     // first, initialize stack pointer
     __asm__("ldr sp, =_estack");
 
+    // we have to do this before initializing the RAM, otherwise it can happen that the watchdog
+    // resets the entires system because initializing the RAM hasn't finished yet
+    init_platform();
+
     // after the stack pointer is initialized correctly, initialize the RAM 
     init_ram();
-
-    // when the RAM is initialized, immediately initialize the platform, since the watchdog is
-    // enabled by default and has to be disabled in order to avoid a reset.
-    init_platform();
 
     // this should probably be done before touching the hardware peripherals, but since the watchdog
     // is enabled by default after reset, we just do it after the platform intialization
