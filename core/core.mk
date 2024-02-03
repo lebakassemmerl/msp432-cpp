@@ -8,6 +8,9 @@
 CORE_DIR = $(ROOT)/core
 
 INCLUDES += $(CORE_DIR)
+
+SRCS += $(CORE_DIR)/libc.cpp
+
 SRCS_NOLTO += \
-	$(CORE_DIR)/libc.cpp \
+	$(CORE_DIR)/libc_no_lto.cpp \
 	$(CORE_DIR)/cm4f.cpp
