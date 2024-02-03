@@ -84,20 +84,20 @@ Err SpiMaster::init(const Cs& cs) noexcept
 
 Err SpiMaster::write(std::span<uint8_t> data, void* context, SpiCallback cb) noexcept
 {
-    if (data.empty() == 0)
+    if (data.empty())
         return Err::Empty;
 
     if (job_fifo.free() == 0)
         return Err::NoMem;
 
-    job_fifo.emplace(SpiJob{
+    job_fifo.emplace(
         SpiTransferType::Write,
         data.data(),
         nullptr,
         data.size(),
         context,
         cb
-    });
+    );
 
     if (!transm_going) {
         transm_going = true;
@@ -115,14 +115,14 @@ Err SpiMaster::read(std::span<uint8_t> buffer, void* context, SpiCallback cb) no
     if (job_fifo.free() == 0)
         return Err::NoMem;
 
-    job_fifo.emplace(SpiJob{
+    job_fifo.emplace(
         SpiTransferType::Read,
         nullptr,
         buffer.data(),
         buffer.size(),
         context,
         cb
-    });
+    );
 
     if (!transm_going) {
         transm_going = true;
@@ -141,14 +141,14 @@ Err SpiMaster::write_read(
     if (job_fifo.free() == 0)
         return Err::NoMem;
 
-    job_fifo.emplace(SpiJob{
+    job_fifo.emplace(
         SpiTransferType::WriteRead,
         txbuf.data(),
         rxbuf.data(),
         std::min(txbuf.size(), rxbuf.size()),
         context,
         cb
-    });
+    );
 
     if (!transm_going) {
         transm_going = true;
