@@ -57,5 +57,5 @@ private:
     static constexpr T ONE = static_cast<T>(1);
     static constexpr T MASK = static_cast<T>(BITS_PER_WORD) - ONE;
 
-    std::array<T, N / BITS_PER_WORD> bits;
+    std::array<T, (N + BITS_PER_WORD - 1) / BITS_PER_WORD> bits;
 };
