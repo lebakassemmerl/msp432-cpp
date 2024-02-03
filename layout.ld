@@ -19,7 +19,7 @@ SECTIONS
     {
         . = ALIGN(4);
         _stext = .;
-        
+
         KEEP(*(.arm_vector))
         KEEP(*(.irq_vector))
         
@@ -42,7 +42,7 @@ SECTIONS
         KEEP (*(SORT(.ctors.*)))
         KEEP (*crtend.o(.ctors))
         _ctors_end = .;
-        
+
         . = ALIGN(4);
         _dtors_begin = .;
         KEEP (*(.fini_array))
@@ -52,12 +52,12 @@ SECTIONS
         KEEP (*(SORT(.dtors.*)))
         KEEP (*crtend.o(.dtors))
         _dtors_end = .;
-        
+
         . = ALIGN(4);
-        _etext = .;       
+        _etext = .;
     } > rom
     
-    .stack (NOLOAD) :   
+    .stack (NOLOAD) :
     {
         /* Place the stack at the beginning of the RAM in order to detect a 
          * stack overflow due to the hardfault-handler when writing beyound the
@@ -76,9 +76,9 @@ SECTIONS
     {
         . = ALIGN(4);
         _sdata = .;
-        
+
         *(.data .data.*)
-        
+
         . = ALIGN(4);
         _edata = .;
     } > ram
@@ -87,10 +87,10 @@ SECTIONS
     {
         . = ALIGN(4);
         _szero = .;
-        
+
         *(.bss .bss.*)
         *(COMMON)
-        
+
         . = ALIGN(4);
         _ezero = .;
     } > ram

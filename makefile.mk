@@ -54,6 +54,7 @@ LDFLAGS := \
 	-lgcc \
 	-Wl,--end-group \
 	-T $(ROOT)/layout.ld \
+	-Xlinker -Map=$(OUTPUT_FILE).map
 
 # add debug or release specific compiler and linker options
 ifeq ($(RELEASE),1)
