@@ -60,7 +60,7 @@ public:
         idx = fetch_add(head, 1);
 
         // after reserving the space, we actually copy the data
-        buf[head.load()] = val;
+        buf[idx] = val;
 
         // when the copying is done, we mark the slot as ready
         ready.set(idx);
@@ -80,7 +80,7 @@ public:
         idx = fetch_add(head, 1);
     
         // same explaination as in push()
-        new(&buf[head.load()]) T{std::forward<Args>(args)...};
+        new(&buf[idx]) T{std::forward<Args>(args)...};
         
         // when the copying is done, we mark the slot as ready
         ready.set(idx);
