@@ -52,8 +52,7 @@ private:
 
         constexpr explicit SpiJob(SpiTransferType type, uint8_t* txbuf, uint8_t* rxbuf, size_t len,
             void* context, SpiCallback cb) noexcept
-            : type(SpiTransferType::None), txbuf(nullptr), rxbuf(nullptr), len(0), context(nullptr),
-            cb(nullptr) {}
+            : type(type), txbuf(txbuf), rxbuf(rxbuf), len(len), context(context), cb(cb) {}
     };
 
     static void redirect_int_handler(
