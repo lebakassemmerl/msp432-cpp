@@ -31,19 +31,27 @@
 #include "spi.h"
 #include "spi_master.h"
 
-struct Rgb {
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
+class Rgb {
+public:
+    constexpr explicit Rgb() noexcept : r(0), g(0), b(0) {}
+    constexpr explicit Rgb(uint8_t r, uint8_t g, uint8_t b) : r(r), g(g), b(b) {}
 
-    uint32_t to_raw() const noexcept
+    template<size_t N> friend class W2812B;
+private:
+    constexpr uint32_t to_raw() const noexcept
     {
-        uint32_t raw = (static_cast<uint32_t>(b)) |
-                       (static_cast<uint32_t>(r) << 8) |
-                       (static_cast<uint32_t>(g) << 16);
+        // We convert the raw-value to a format that matches our lookup table and generates the
+        // bytes in the correct order.
+        uint32_t raw = static_cast<uint32_t>(((g >> 4) & 0x0F) | ((g << 4) & 0xF0)) |
+                       (static_cast<uint32_t>(((r >> 4) & 0x0F) | ((r << 4) & 0xF0)) << 8) |
+                       (static_cast<uint32_t>(((b >> 4) & 0x0F) | ((b << 4) & 0xF0)) << 16);
 
         return raw;
     }
+
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
 };
 
 template<size_t N>
@@ -77,9 +85,8 @@ public:
             return Err::Busy;
 
         raw = col.to_raw();
-        for (unsigned i = 0; i < WORDS_PER_LED; i++) {
-            // the highest green bit has to be transmitted first, thus the reverse array-access
-            fb[led_idx * WORDS_PER_LED + (WORDS_PER_LED - i - 1)] = LUT[raw & 0x0F];
+        for (size_t i = 0; i < WORDS_PER_LED; i++) {
+            fb[led_idx * WORDS_PER_LED + i] = LUT[raw & 0x0F];
             raw >>= 4;
         }
 
@@ -99,13 +106,14 @@ public:
 
         raw = col.to_raw();
         for (size_t i = 0; i < WORDS_PER_LED; i++) {
-            // the highest green bit has to be transmitted first, thus the reverse array-access
-            raw_color[WORDS_PER_LED - i - 1] = LUT[raw & 0x0F];
+            raw_color[i] = LUT[raw & 0x0F];
             raw >>= 4;
         }
 
-        for (size_t i = 0; i < N; i++)
-            libc::memcpy(&fb[i * WORDS_PER_LED], raw_color, sizeof(raw_color));
+        for (size_t i = 0; i < (N * WORDS_PER_LED); i += WORDS_PER_LED) {
+            for (size_t j = 0; j < WORDS_PER_LED; j++)
+                fb[i + j] = raw_color[j];
+        }
 
         return Err::Ok;
     }
@@ -118,7 +126,7 @@ public:
         if (transmitting.load(std::memory_order::relaxed))
             return Err::Busy;
 
-        libc::memset(fb.data(), ZERO, N * 4);
+        libc::memset(fb.data(), ZERO, N * WORDS_PER_LED);
         return Err::Ok;
     }
 
@@ -153,24 +161,15 @@ private:
 
         for (unsigned var = 0; var < 16; var++) {
             uint32_t tmp = 0;
-            if constexpr (std::endian::native == std::endian::little) {
-                for (unsigned i = 0, testbit = 1 << 3; i < 4; i++, testbit >>= 1) {
-                    if (var & testbit) {
-                        tmp |= ONE << (i * 8);
-                    } else {
-                        tmp |= ZERO << (i * 8);
-                    }
-                    ret[var] = tmp;
+
+            // we are on a little-endian architecture
+            for (unsigned i = 0, testbit = 1 << 3; i < 4; i++, testbit >>= 1) {
+                if (var & testbit) {
+                    tmp |= ONE << (i * 8);
+                } else {
+                    tmp |= ZERO << (i * 8);
                 }
-            } else {
-                for (unsigned i = 0, testbit = 1; i < 4; i++, testbit <<= 1) {
-                    if (var & testbit) {
-                        tmp |= ONE << (i * 8);
-                    } else {
-                        tmp |= ZERO << (i * 8);
-                    }
-                    ret[var] = tmp;
-                }
+                ret[var] = tmp;
             }
         }
         return ret;
