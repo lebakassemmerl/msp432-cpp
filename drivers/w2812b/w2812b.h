@@ -62,6 +62,9 @@ public:
 
     Err init() noexcept
     {
+        if (initialized)
+            return Err::AlreadyInitialized;
+
         uint32_t spi_freq = spi.get_actual_freq_hz();
         if ((spi_freq >= SPI_FREQ_HZ_MIN) && (spi_freq <= SPI_FREQ_HZ_MAX)) {
             initialized = true;
@@ -69,6 +72,16 @@ public:
         } else {
             return Err::NotSupported;
         }
+    }
+
+    bool is_initialized() const noexcept
+    {
+        return initialized;
+    }
+
+    bool is_busy() const noexcept
+    {
+        return transmitting.load(std::memory_order::relaxed);
     }
 
     Err set_color(size_t led_idx, Rgb col)
