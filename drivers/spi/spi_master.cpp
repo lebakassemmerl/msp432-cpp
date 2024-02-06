@@ -82,7 +82,7 @@ Err SpiMaster::init(const Cs& cs) noexcept
     return Err::Ok;
 }
 
-Err SpiMaster::write(std::span<uint8_t> data, void* context, SpiCallback cb) noexcept
+Err SpiMaster::write(std::span<uint8_t> data, Pin* cs, void* context, SpiCallback cb) noexcept
 {
     if (data.empty())
         return Err::Empty;
@@ -95,6 +95,7 @@ Err SpiMaster::write(std::span<uint8_t> data, void* context, SpiCallback cb) noe
         data.data(),
         nullptr,
         data.size(),
+        cs,
         context,
         cb
     );
@@ -107,7 +108,7 @@ Err SpiMaster::write(std::span<uint8_t> data, void* context, SpiCallback cb) noe
     return Err::Ok;
 }
 
-Err SpiMaster::read(std::span<uint8_t> buffer, void* context, SpiCallback cb) noexcept
+Err SpiMaster::read(std::span<uint8_t> buffer, Pin* cs, void* context, SpiCallback cb) noexcept
 {
     if (buffer.empty() == 0)
         return Err::Empty;
@@ -120,6 +121,7 @@ Err SpiMaster::read(std::span<uint8_t> buffer, void* context, SpiCallback cb) no
         nullptr,
         buffer.data(),
         buffer.size(),
+        cs,
         context,
         cb
     );
@@ -133,7 +135,11 @@ Err SpiMaster::read(std::span<uint8_t> buffer, void* context, SpiCallback cb) no
 }
 
 Err SpiMaster::write_read(
-    std::span<uint8_t> txbuf, std::span<uint8_t> rxbuf, void* context, SpiCallback cb) noexcept
+    std::span<uint8_t> txbuf,
+    std::span<uint8_t> rxbuf,
+    Pin* cs,
+    void* context,
+    SpiCallback cb) noexcept
 {
     if (txbuf.empty() || rxbuf.empty())
         return Err::Empty;
@@ -146,6 +152,7 @@ Err SpiMaster::write_read(
         txbuf.data(),
         rxbuf.data(),
         std::min(txbuf.size(), rxbuf.size()),
+        cs,
         context,
         cb
     );
@@ -163,6 +170,11 @@ void SpiMaster::start_transmission() noexcept
     const uint8_t* rxreg = reinterpret_cast<uint8_t*>(&usci.rxbuf());
     uint8_t* txreg = reinterpret_cast<uint8_t*>(&usci.txbuf());
     SpiJob& job = job_fifo.peek_ref().value().get();
+
+    // if a CS-pin was provided, we pull it low before starting the job
+    if (job.cs) {
+        job.cs->set_low();
+    }
 
     switch (job.type) {
     case SpiTransferType::Write:
@@ -195,6 +207,11 @@ void SpiMaster::int_handler(const uint8_t* src_buf, uint8_t* dst_buf, size_t len
         // need this interrupt since we have to wait for the RX interrupt anyway -> simply
         // return from the handler.
         return;
+    }
+
+    // if a CS-pin was provided, we pull it high since the job has finished
+    if (job.cs) {
+        job.cs->set_high();
     }
 
     if (job.cb != nullptr) {

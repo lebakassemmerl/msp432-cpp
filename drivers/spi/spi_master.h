@@ -14,6 +14,7 @@
 #include "dma.h"
 #include "err.h"
 #include "fifo.h"
+#include "pin.h"
 #include "spi.h"
 #include "usci.h"
 #include "uscispi.h"
@@ -30,9 +31,9 @@ public:
 
     Err init(const Cs& cs) noexcept;
 
-    Err write(std::span<uint8_t> data, void* context, SpiCallback cb) noexcept;
-    Err read(std::span<uint8_t> buffer, void* context, SpiCallback cb) noexcept;
-    Err write_read(std::span<uint8_t> txbuf, std::span<uint8_t> rxbuf, void* context,
+    Err write(std::span<uint8_t> data, Pin* cs, void* context, SpiCallback cb) noexcept;
+    Err read(std::span<uint8_t> buffer, Pin* cs, void* context, SpiCallback cb) noexcept;
+    Err write_read(std::span<uint8_t> txbuf, std::span<uint8_t> rxbuf, Pin* cs, void* context,
         SpiCallback cb) noexcept;
 
     uint32_t get_actual_freq_hz() const noexcept { return actual_freq; }
@@ -43,16 +44,18 @@ private:
         uint8_t* txbuf;
         uint8_t* rxbuf;
         size_t len;
+
+        Pin* cs;
         void* context;
         SpiCallback cb;
 
         constexpr explicit SpiJob() noexcept
-            : type(SpiTransferType::None), txbuf(nullptr), rxbuf(nullptr), len(0), context(nullptr),
-            cb(nullptr) {}
+            : type(SpiTransferType::None), txbuf(nullptr), rxbuf(nullptr), len(0), cs(nullptr),
+            context(nullptr), cb(nullptr) {}
 
-        constexpr explicit SpiJob(SpiTransferType type, uint8_t* txbuf, uint8_t* rxbuf, size_t len,
-            void* context, SpiCallback cb) noexcept
-            : type(type), txbuf(txbuf), rxbuf(rxbuf), len(len), context(context), cb(cb) {}
+        constexpr explicit SpiJob(SpiTransferType type, uint8_t* txbuf, uint8_t* rxbuf,size_t len,
+            Pin* cs, void* context, SpiCallback cb) noexcept
+            : type(type), txbuf(txbuf), rxbuf(rxbuf), len(len), cs(cs), context(context), cb(cb) {}
     };
 
     static void redirect_int_handler(

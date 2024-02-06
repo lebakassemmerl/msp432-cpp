@@ -147,7 +147,7 @@ public:
         transmitting.store(true, std::memory_order::acquire);
         return spi.write(
             std::span<uint8_t>{reinterpret_cast<uint8_t*>(fb.data()), fb.size() * sizeof(fb[0])},
-            this, redirect_spi_cb);
+            nullptr, this, redirect_spi_cb);
     }
 
     template<uint16_t WIDTH, uint16_t HEIGHT> friend class W2812BMatrix;
