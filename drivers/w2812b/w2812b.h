@@ -86,8 +86,6 @@ public:
 
     Err set_color(size_t led_idx, Rgb col)
     {
-        uint32_t raw;
-
         if (!initialized)
             return Err::NotInitialized;
 
@@ -97,12 +95,7 @@ public:
         if (transmitting.load(std::memory_order::relaxed))
             return Err::Busy;
 
-        raw = col.to_raw();
-        for (size_t i = 0; i < WORDS_PER_LED; i++) {
-            fb[led_idx * WORDS_PER_LED + i] = LUT[raw & 0x0F];
-            raw >>= 4;
-        }
-
+        set_color_unsafe(led_idx, col);
         return Err::Ok;
     }
 
@@ -157,6 +150,7 @@ public:
             this, redirect_spi_cb);
     }
 
+    template<uint16_t WIDTH, uint16_t HEIGHT> friend class W2812BMatrix;
 private:
     // Minimum an maximum frequency to satisfy the required timing defined in the spec. For
     // calculation details look at the spec (https://cdn-shop.adafruit.com/datasheets/WS2812B.pdf)
@@ -201,6 +195,15 @@ private:
     void handle_spi_cb() noexcept
     {
         transmitting.store(false, std::memory_order::release);
+    }
+
+    void set_color_unsafe(size_t led_idx, Rgb col) noexcept
+    {
+        uint32_t raw = col.to_raw();
+        for (size_t i = 0; i < WORDS_PER_LED; i++) {
+            fb[led_idx * WORDS_PER_LED + i] = LUT[raw & 0x0F];
+            raw >>= 4;
+        }
     }
 
     SpiMaster& spi; // the SPI-module has to be configured to 6MHz SCK, otherwise this won't work
