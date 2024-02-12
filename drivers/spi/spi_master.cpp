@@ -17,6 +17,10 @@
 #include "usci.h"
 #include "uscispi.h"
 
+#include "register.h"
+
+static const uint8_t TX_IDLE = 0xFF;
+
 Err SpiMaster::init(const Cs& cs) noexcept
 {
     Err ret;
@@ -61,7 +65,7 @@ Err SpiMaster::init(const Cs& cs) noexcept
         DmaPtrIncrement::Incr8Bit,
         DmaPtrIncrement::NoIncr,
         reinterpret_cast<void*>(this),
-        SpiMaster::redirect_int_handler
+        SpiMaster::useless_tx_handler
     });
 
     if (ret != Err::Ok)
@@ -73,7 +77,7 @@ Err SpiMaster::init(const Cs& cs) noexcept
         DmaPtrIncrement::NoIncr,
         DmaPtrIncrement::Incr8Bit,
         reinterpret_cast<void*>(this),
-        SpiMaster::redirect_int_handler
+        SpiMaster::redirect_rx_handler
     });
     if (ret != Err::Ok)
         return ret;
@@ -82,7 +86,7 @@ Err SpiMaster::init(const Cs& cs) noexcept
     return Err::Ok;
 }
 
-Err SpiMaster::write(std::span<uint8_t> data, Pin* cs, void* context, SpiCallback cb) noexcept
+Err SpiMaster::write(std::span<const uint8_t> data, Pin* cs, void* context, SpiCallback cb) noexcept
 {
     if (data.empty())
         return Err::Empty;
@@ -92,7 +96,7 @@ Err SpiMaster::write(std::span<uint8_t> data, Pin* cs, void* context, SpiCallbac
 
     job_fifo.emplace(
         SpiTransferType::Write,
-        data.data(),
+        const_cast<uint8_t*>(data.data()),
         nullptr,
         data.size(),
         cs,
@@ -135,7 +139,7 @@ Err SpiMaster::read(std::span<uint8_t> buffer, Pin* cs, void* context, SpiCallba
 }
 
 Err SpiMaster::write_read(
-    std::span<uint8_t> txbuf,
+    std::span<const uint8_t> txbuf,
     std::span<uint8_t> rxbuf,
     Pin* cs,
     void* context,
@@ -149,7 +153,7 @@ Err SpiMaster::write_read(
 
     job_fifo.emplace(
         SpiTransferType::WriteRead,
-        txbuf.data(),
+        const_cast<uint8_t*>(txbuf.data()),
         rxbuf.data(),
         std::min(txbuf.size(), rxbuf.size()),
         cs,
@@ -173,12 +177,17 @@ void SpiMaster::start_transmission() noexcept
 
     // if a CS-pin was provided, we pull it low before starting the job
     if (job.cs) {
-        job.cs->set_low();
+        job.cs->set_high();
     }
 
     switch (job.type) {
     case SpiTransferType::Write:
         tx_dma.transfer_mem_to_periph(job.txbuf, txreg, job.len);
+        // We need here an RX-transfer since the TX-interrupt occurs before all the data is sent
+        // out. This means, we cannot reliably use it for disabling a CS-pin. Thus, trigger a dummy
+        // read.
+        rx_dma.transfer_custom(rxreg, &rx_dummy, DmaPtrIncrement::NoIncr,
+            DmaPtrIncrement::NoIncr, job.len);
         break;
     case SpiTransferType::Read:
         rx_dma.transfer_periph_to_mem(rxreg, job.rxbuf, job.len);
@@ -201,17 +210,9 @@ void SpiMaster::int_handler(const uint8_t* src_buf, uint8_t* dst_buf, size_t len
 {
     SpiJob& job = job_fifo.peek_ref().value().get();
 
-    if (((job.type == SpiTransferType::Read) && (src_buf == &TX_IDLE)) ||
-        ((job.type == SpiTransferType::WriteRead) && (src_buf == job.txbuf))) {
-        // We got the TX interrupt of either a read- or a read-write-transmission. We do not
-        // need this interrupt since we have to wait for the RX interrupt anyway -> simply
-        // return from the handler.
-        return;
-    }
-
     // if a CS-pin was provided, we pull it high since the job has finished
     if (job.cs) {
-        job.cs->set_high();
+        job.cs->set_low();
     }
 
     if (job.cb != nullptr) {
@@ -237,9 +238,15 @@ void SpiMaster::int_handler(const uint8_t* src_buf, uint8_t* dst_buf, size_t len
         start_transmission();
 }
 
-void SpiMaster::redirect_int_handler(
+void SpiMaster::redirect_rx_handler(
     const uint8_t* src_buf, uint8_t* dst_buf, size_t len, void* instance) noexcept
 {
     SpiMaster* inst = reinterpret_cast<SpiMaster*>(instance);
     inst->int_handler(src_buf, dst_buf, len);
+}
+
+void SpiMaster::useless_tx_handler(
+    const uint8_t* src_buf, uint8_t* dst_buf, size_t len, void* instance) noexcept
+{
+
 }

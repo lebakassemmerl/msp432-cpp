@@ -19,21 +19,19 @@
 #include "usci.h"
 #include "uscispi.h"
 
-static const uint8_t TX_IDLE = 0xFF;
-
 class SpiMaster {
 public:
     consteval explicit SpiMaster(Usci& usci, Dma& dma, SpiMode mode, uint32_t freq_hz,
         uint8_t tx_dma_chan, uint8_t rx_dma_chan, uint8_t tx_dma_src, uint8_t rx_dma_src) noexcept
-        : initialized(false), transm_going(false), desired_freq(freq_hz), actual_freq(0),
-        mode(mode), usci(usci), tx_dma(dma[tx_dma_chan]), rx_dma(dma[rx_dma_chan]),
+        : initialized(false), transm_going(false), rx_dummy(0), desired_freq(freq_hz),
+        actual_freq(0), mode(mode), usci(usci), tx_dma(dma[tx_dma_chan]), rx_dma(dma[rx_dma_chan]),
         tx_dma_src(tx_dma_src), rx_dma_src(rx_dma_src), job_fifo() {}
 
     Err init(const Cs& cs) noexcept;
 
-    Err write(std::span<uint8_t> data, Pin* cs, void* context, SpiCallback cb) noexcept;
+    Err write(std::span<const uint8_t> data, Pin* cs, void* context, SpiCallback cb) noexcept;
     Err read(std::span<uint8_t> buffer, Pin* cs, void* context, SpiCallback cb) noexcept;
-    Err write_read(std::span<uint8_t> txbuf, std::span<uint8_t> rxbuf, Pin* cs, void* context,
+    Err write_read(std::span<const uint8_t> txbuf, std::span<uint8_t> rxbuf, Pin* cs, void* context,
         SpiCallback cb) noexcept;
 
     uint32_t get_actual_freq_hz() const noexcept { return actual_freq; }
@@ -58,13 +56,17 @@ private:
             : type(type), txbuf(txbuf), rxbuf(rxbuf), len(len), cs(cs), context(context), cb(cb) {}
     };
 
-    static void redirect_int_handler(
+    static void redirect_rx_handler(
+        const uint8_t* src_buf, uint8_t* dst_buf, size_t len, void* instance) noexcept;
+    static void useless_tx_handler(
         const uint8_t* src_buf, uint8_t* dst_buf, size_t len, void* instance) noexcept;
     void start_transmission() noexcept;
     void int_handler(const uint8_t* src_buf, uint8_t* dst_buf, size_t len) noexcept;
 
     bool initialized;
     bool transm_going;
+    uint8_t rx_dummy;
+
     uint32_t desired_freq;
     uint32_t actual_freq;
     SpiMode mode;
