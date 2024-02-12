@@ -78,7 +78,7 @@ Err DmaChannel::transfer_mem_to_periph(const uint8_t* src, uint8_t* dst, uint32_
     calc_remaining_words(len);
     info.type = DmaTransferType::MemoryToPeripheral;
 
-    config_prim_channel(len);
+    config_prim_channel(bytes_to_transmit);
     enable_channel();
 
     return Err::Ok;
