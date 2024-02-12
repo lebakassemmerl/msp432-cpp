@@ -52,7 +52,7 @@ int main(void)
 
     uart0.write("\r\nHallo erstmal!\r\n");
     ledstrip.init();
-    ledstrip.set_color_for_all_leds(Rgb{0xFF, 0, 0});
+    ledstrip.set_color_for_all_leds(Rgb{0x3A, 0xC5, 0x81});
     ledstrip.refresh_leds();
 
     while (true) {
