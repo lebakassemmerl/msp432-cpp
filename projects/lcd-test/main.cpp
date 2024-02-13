@@ -30,7 +30,7 @@ Led led_blue = Led{chip.gpio_pins().int_pin(IntPinNr::P02_2), false};
 
 Uart uart0{chip.uscia0(), chip.dma(), 115200, 0, 1, 1, 1};
 SpiMaster spi1{chip.uscib1(), chip.dma(), SpiMode::Cpol1Cphase1, 200'000, 2, 3, 2, 2};
-Nt7108C lcd{spi1, chip.gpio_pins().int_pin(IntPinNr::P04_1)};
+Lt7920 lcd{spi1, chip.gpio_pins().int_pin(IntPinNr::P04_1)};
 
 int main(void)
 {

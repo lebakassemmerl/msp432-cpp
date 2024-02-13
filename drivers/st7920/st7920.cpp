@@ -32,34 +32,34 @@ constexpr std::array<uint8_t, 3> CMD_CURSOR_BLINK = generate_cmd(0x0F);
 constexpr std::array<uint8_t, 3> CMD_BASIC_MODE = generate_cmd(0x30);
 constexpr std::array<uint8_t, 3> CMD_SET_ADDR_0 = generate_cmd(0x80);
 
-void Nt7108C::redirect_cmd_cb(
+void Lt7920::redirect_cmd_cb(
     SpiTransferType type,
     std::span<uint8_t> txbuf,
     std::span<uint8_t> rxbuf,
     void* context) noexcept
 {
-    Nt7108C* instance = reinterpret_cast<Nt7108C*>(context);
+    Lt7920* instance = reinterpret_cast<Lt7920*>(context);
     instance->cmd_cb();
 }
 
-void Nt7108C::redirect_write_cb(
+void Lt7920::redirect_write_cb(
     SpiTransferType type,
     std::span<uint8_t> txbuf,
     std::span<uint8_t> rxbuf,
     void* context) noexcept
 {
-    Nt7108C* instance = reinterpret_cast<Nt7108C*>(context);
+    Lt7920* instance = reinterpret_cast<Lt7920*>(context);
     instance->write_cb();
 }
 
-void Nt7108C::write_cb() noexcept
+void Lt7920::write_cb() noexcept
 {
     // spi.write(std::span{CMD_HOME.data(), CMD_HOME.size()}, &cs, nullptr, nullptr);
     spi.write(std::span{&fb[fb_idx], 3}, &cs, this, redirect_write_cb);
     update_fb_idx();
 }
 
-void Nt7108C::cmd_cb() noexcept
+void Lt7920::cmd_cb() noexcept
 {
     if (!initialized) {
         initialized = true;
@@ -71,7 +71,7 @@ void Nt7108C::cmd_cb() noexcept
     }
 }
 
-Err Nt7108C::init() noexcept
+Err Lt7920::init() noexcept
 {
     if (spi.get_actual_freq_hz() > 2'500'000)
         return Err::OutOfRange;
@@ -92,7 +92,7 @@ Err Nt7108C::init() noexcept
     return Err::Ok;
 }
 
-Err Nt7108C::set_pixel(uint8_t x, uint8_t y, bool val) noexcept
+Err Lt7920::set_pixel(uint8_t x, uint8_t y, bool val) noexcept
 {
     size_t idx;
     if ((x >= PIX_WIDTH) || (y >= PIX_HEIGHT))

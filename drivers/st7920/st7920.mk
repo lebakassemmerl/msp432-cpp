@@ -5,7 +5,7 @@
 # E-Mail: hotschi@gmx.at         #
 ##################################
 
-NT7108C_DIR = $(ROOT)/drivers/nt7108c
+ST7920_DIR = $(ROOT)/drivers/st7920
 
-INCLUDES += $(NT7108C_DIR)
-SRCS += $(NT7108C_DIR)/nt7108c.cpp
+INCLUDES += $(ST7920_DIR)
+SRCS += $(ST7920_DIR)/st7920.cpp

@@ -16,12 +16,12 @@
 #include "spi.h"
 #include "spi_master.h"
 
-class Nt7108C {
+class Lt7920 {
 public:
     static constexpr size_t PIX_WIDTH = 128;
     static constexpr size_t PIX_HEIGHT = 64;
 
-    constexpr explicit Nt7108C(SpiMaster& spi, Pin& cs) noexcept
+    constexpr explicit Lt7920(SpiMaster& spi, Pin& cs) noexcept
         : fb(), initialized(false), fb_idx(0), spi(spi), cs(cs) {}
 
     Err init() noexcept;
