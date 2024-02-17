@@ -66,12 +66,15 @@ public:
             return Err::AlreadyInitialized;
 
         uint32_t spi_freq = spi.get_actual_freq_hz();
-        if ((spi_freq >= SPI_FREQ_HZ_MIN) && (spi_freq <= SPI_FREQ_HZ_MAX)) {
-            initialized = true;
-            return Err::Ok;
-        } else {
+        if (!((spi_freq >= SPI_FREQ_HZ_MIN) && (spi_freq <= SPI_FREQ_HZ_MAX)))
             return Err::NotSupported;
-        }
+
+        // initialize framebuffer with 0
+        for (size_t i = 0; i < N * WORDS_PER_LED; i++)
+            fb[RESET_WORDS + i] = LUT[0];
+
+        initialized = true;
+        return Err::Ok;
     }
 
     bool is_initialized() const noexcept
@@ -118,7 +121,7 @@ public:
 
         for (size_t i = 0; i < (N * WORDS_PER_LED); i += WORDS_PER_LED) {
             for (size_t j = 0; j < WORDS_PER_LED; j++)
-                fb[i + j] = raw_color[j];
+                fb[RESET_WORDS + i + j] = raw_color[j];
         }
 
         return Err::Ok;
@@ -159,6 +162,7 @@ private:
     static constexpr uint32_t SPI_FREQ_HZ_MAX = 7'000'000;
 
     static constexpr size_t WORDS_PER_LED = 24 / 4; // 24 bytes = 6 uint32
+    static constexpr size_t RESET_WORDS = 100;
     static constexpr uint32_t ZERO = 0b11100000;
     static constexpr uint32_t ONE = 0b11111000;
 
@@ -201,13 +205,13 @@ private:
     {
         uint32_t raw = col.to_raw();
         for (size_t i = 0; i < WORDS_PER_LED; i++) {
-            fb[led_idx * WORDS_PER_LED + i] = LUT[raw & 0x0F];
+            fb[RESET_WORDS + led_idx * WORDS_PER_LED + i] = LUT[raw & 0x0F];
             raw >>= 4;
         }
     }
 
     SpiMaster& spi; // the SPI-module has to be configured to 6MHz SCK, otherwise this won't work
-    std::array<uint32_t, N * WORDS_PER_LED> fb;
+    std::array<uint32_t, RESET_WORDS + N * WORDS_PER_LED> fb;
     std::atomic<bool> transmitting;
     bool initialized;
 };

@@ -24,7 +24,7 @@
 Msp432& chip = Msp432::instance();
 Uart uart0{chip.uscia0(), chip.dma(), 115200, 0, 1, 1, 1};
 SpiMaster spi1{chip.uscib1(), chip.dma(), SpiMode::Cpol0Cphase0, 6'000'000, 2, 3, 2, 2};
-W2812B<100> ledstrip{spi1};
+W2812B<4> ledstrip{spi1};
 
 int main(void)
 {
@@ -34,6 +34,9 @@ int main(void)
     // UART0 pins
     chip.gpio_pins().int_pin(IntPinNr::P01_2).enable_primary_function();
     chip.gpio_pins().int_pin(IntPinNr::P01_3).enable_primary_function();
+
+    // SPI pin(s)
+    chip.gpio_pins().int_pin(IntPinNr::P06_4).enable_primary_function(); // mosi
 
     uart0.init(chip.cs());
     spi1.init(chip.cs());
@@ -50,21 +53,22 @@ int main(void)
     btn1.make_input();
     btn1.set_pull_mode(PullMode::PullUp);
 
-    uart0.write("\r\nHallo erstmal!\r\n");
+    // uart0.write("\r\nHallo erstmal!\r\n");
     ledstrip.init();
-    ledstrip.set_color_for_all_leds(Rgb{0x3A, 0xC5, 0x81});
+
+    ledstrip.set_color_for_all_leds(Rgb{0x00, 0x00, 0x00});
     ledstrip.refresh_leds();
 
     while (true) {
         if (!btn1.read())
             led_blue.toggle();
 
-        ledstrip.set_color_for_all_leds(Rgb{0, green, 0});
+        ledstrip.set_color_for_all_leds(Rgb{green, 0xFFu - green, 0x7f});
         ledstrip.refresh_leds();
 
         green += 10;
         led_green.toggle();
-        uart0.write("\r\nTest write.");
+        // uart0.write("\r\nTest write.");
         chip.delay_ms(500);
     }
 }
