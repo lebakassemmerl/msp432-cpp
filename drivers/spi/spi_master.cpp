@@ -186,12 +186,14 @@ void SpiMaster::start_transmission() noexcept
 
     switch (job.type) {
     case SpiTransferType::Write:
-        tx_dma.transfer_mem_to_periph(job.txbuf, txreg, job.len);
-        // We need here an RX-transfer since the TX-interrupt occurs before all the data is sent
+        // We also need an RX-transfer since the TX-interrupt occurs before all the data is sent
         // out. This means, we cannot reliably use it for disabling a CS-pin. Thus, trigger a dummy
         // read.
         rx_dma.transfer_custom(rxreg, &rx_dummy, DmaPtrIncrement::NoIncr,
             DmaPtrIncrement::NoIncr, job.len);
+
+        // rx_dma.transfer_periph_to_mem(rxreg, spi_buf, job.len);
+        tx_dma.transfer_mem_to_periph(job.txbuf, txreg, job.len);
         break;
     case SpiTransferType::Read:
         rx_dma.transfer_periph_to_mem(rxreg, job.rxbuf, job.len);
