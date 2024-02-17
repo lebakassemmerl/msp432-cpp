@@ -76,8 +76,6 @@ Err DmaChannel::transfer_mem_to_periph(const uint8_t* src, uint8_t* dst, uint32_
     info.num_bytes = len;
 
     calc_remaining_words(len);
-    info.type = DmaTransferType::MemoryToPeripheral;
-
     config_prim_channel(bytes_to_transmit);
     enable_channel();
 
@@ -124,8 +122,6 @@ Err DmaChannel::transfer_periph_to_mem(const uint8_t* src, uint8_t* dst, uint32_
     info.num_bytes = len;
 
     calc_remaining_words(len);
-    info.type = DmaTransferType::PeripheralToMemory;
-
     config_prim_channel(bytes_to_transmit);
     enable_channel();
 
@@ -179,8 +175,6 @@ Err DmaChannel::transfer_custom(const uint8_t* src, uint8_t* dst, DmaPtrIncremen
     info.num_bytes = num_bytes;
 
     calc_remaining_words(num_bytes);
-    info.type = DmaTransferType::PeripheralToMemory;
-
     config_prim_channel(bytes_to_transmit);
     enable_channel();
 
@@ -199,8 +193,13 @@ void DmaChannel::calc_remaining_words(size_t num_bytes) noexcept
 
 void DmaChannel::update_dma_pointers() noexcept
 {
+    constexpr uint32_t DST_NOINC = 
+        dmactrl::ctrl::dst_inc.value(static_cast<uint32_t>(DmaPtrIncrement::NoIncr)).get_value();
+    constexpr uint32_t SRC_NOINC = 
+        dmactrl::ctrl::src_inc.value(static_cast<uint32_t>(DmaPtrIncrement::NoIncr)).get_value();
+
     uint32_t words_to_transmit;
-    uint32_t r_power;
+    uint32_t ctrl_reg;
 
     if (info.remaining_words > MAX_TRANSFERS_LEN) {
         words_to_transmit = MAX_TRANSFERS_LEN;
@@ -210,26 +209,28 @@ void DmaChannel::update_dma_pointers() noexcept
         info.remaining_words = 0;
     }
 
-    if ((info.type == DmaTransferType::PeripheralToMemory) ||
-       (info.type == DmaTransferType::MemoryToMemory)) {
+    ctrl_reg = ctrl_prim.ctrl.get();
+
+    if ((ctrl_reg & dmactrl::ctrl::dst_inc.mask()) != DST_NOINC) {
         ctrl_prim.dst_ptr.set(
-            ctrl_prim.dst_ptr.get() + (MAX_TRANSFERS_LEN << static_cast<uint32_t>(conf.width)));
+            ctrl_prim.dst_ptr.get() + (words_to_transmit << static_cast<uint32_t>(conf.width)));
     }
 
-    if ((info.type == DmaTransferType::MemoryToPeripheral) ||
-       (info.type == DmaTransferType::MemoryToMemory)) {
+    if ((ctrl_reg & dmactrl::ctrl::src_inc.mask()) != SRC_NOINC) {
         ctrl_prim.src_ptr.set(
-            ctrl_prim.src_ptr.get() + (MAX_TRANSFERS_LEN << static_cast<uint32_t>(conf.width)));
+            ctrl_prim.src_ptr.get() + (words_to_transmit << static_cast<uint32_t>(conf.width)));
     }
 
+#if 0
     if (info.type == DmaTransferType::MemoryToMemory)
         r_power = 31 - std::countl_zero(words_to_transmit);
     else
         r_power = 0;
+#endif
 
     ctrl_prim.ctrl.modify(
         dmactrl::ctrl::n_minus_1.value(words_to_transmit - 1) +
-        dmactrl::ctrl::r_power.value(r_power) +
+        dmactrl::ctrl::r_power.value(0) +
         dmactrl::ctrl::cycle_ctrl.value(static_cast<uint32_t>(mode))
     );
 

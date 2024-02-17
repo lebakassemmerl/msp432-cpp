@@ -110,12 +110,10 @@ private:
         uint8_t* dst;
         size_t num_bytes;
         size_t remaining_words;
-        DmaTransferType type;
         bool busy;
 
         constexpr explicit TransferInfo() noexcept
-            : src(nullptr), dst(nullptr), num_bytes(0), remaining_words(0),
-            type(DmaTransferType::None), busy(false) {}
+            : src(nullptr), dst(nullptr), num_bytes(0), remaining_words(0), busy(false) {}
     };
 
     constexpr explicit DmaChannel(uint8_t idx, DmaChannelControl& prim, DmaChannelControl& alt)
