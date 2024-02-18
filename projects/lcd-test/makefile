@@ -17,10 +17,10 @@ PERIPHERALS += \
 
 DRIVERS += \
 	led \
-	nt7108c \
 	spi \
 	uart \
 	w2812b \
+	us_timer \
 
 INCLUDES += $(PROJ_DIR)
 SRCS += $(wildcard $(PROJ_DIR)/*.cpp)
