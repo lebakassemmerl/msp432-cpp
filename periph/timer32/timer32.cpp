@@ -12,13 +12,18 @@
 #include "timer32.h"
 #include "timer32_regs.h"
 
-Err Timer32::init(void (*callback)(void *cookie) noexcept, void* cookie) noexcept
+Err 
+Timer32::init(bool use_interrupt, void* cookie, void (*callback)(void *cookie) noexcept) noexcept
 {
     if (is_initialized())
         return Err::Ok;
 
-    if (!callback)
-        return Err::NullPtr;
+    if (use_interrupt) {
+        if(!callback)
+            return Err::NullPtr;
+
+        status |= STATUS_USE_INTERRUPT;
+    }
 
     this->cb = callback;
     this->cookie = cookie;
@@ -61,8 +66,8 @@ Err Timer32::start() noexcept
         return Err::NotInitialized;
 
     reg().control.modify(
-        timer32regs::control::ie.value(1)       // enable interrupt
-        + timer32regs::control::enable.value(1) // enable / start timer
+        timer32regs::control::ie.value((status & STATUS_USE_INTERRUPT) > 0) // enable interrupt
+        + timer32regs::control::enable.value(1)                             // enable / start timer
     );
 
     status |= STATUS_RUNNING;

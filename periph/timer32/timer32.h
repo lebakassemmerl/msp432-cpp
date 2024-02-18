@@ -16,12 +16,13 @@
 
 class Timer32 {
 public:
-    Err init(void (*callback)(void *cookie) noexcept, void* cookie) noexcept;
+    Err init(bool use_interrupt, void* cookie, void (*callback)(void *cookie) noexcept) noexcept;
     Err start() noexcept;
     void stop() noexcept;
     Err set_frequency(uint32_t freq_hz, const Cs& cs) noexcept;
 
     inline uint32_t get_frequency() const noexcept { return freq; }
+    inline uint32_t get_load_register() noexcept { return reg().load.get(); }
     inline bool is_running() noexcept { return (status & STATUS_RUNNING) > 0; }
     inline bool is_initialized() noexcept { return (status & STATUS_INITIALIZED) > 0; }
 
@@ -30,6 +31,7 @@ public:
 private:
     static constexpr uint8_t STATUS_INITIALIZED = hlp::bit<uint8_t>(0);
     static constexpr uint8_t STATUS_RUNNING = hlp::bit<uint8_t>(1);
+    static constexpr uint8_t STATUS_USE_INTERRUPT = hlp::bit<uint8_t>(2);
 
     constexpr explicit Timer32(size_t reg_base) noexcept
         : status(0), freq(0), cookie(nullptr), cb(nullptr), reg_base(reg_base) {}
