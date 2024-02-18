@@ -15,19 +15,21 @@
 #include "pin.h"
 #include "spi.h"
 #include "spi_master.h"
+#include "us_timer.h"
 
 class Lt7920 {
 public:
     static constexpr size_t PIX_WIDTH = 128;
     static constexpr size_t PIX_HEIGHT = 64;
 
-    constexpr explicit Lt7920(SpiMaster& spi, Pin& cs) noexcept
-        : fb(), initialized(false), fb_idx(0), spi(spi), cs(cs) {}
+    constexpr explicit Lt7920(SpiMaster& spi, Pin& cs, UsTimer& timer) noexcept
+        : fb(), initialized(false), fb_idx(0), timer(timer), spi(spi), cs(cs) {}
 
     Err init() noexcept;
+    Err periodic() noexcept;
+
     Err display_on() noexcept;
     Err display_off() noexcept;
-
     Err set_pixel(uint8_t x, uint8_t y, bool val) noexcept;
 private:
     static void redirect_cmd_cb(
@@ -50,6 +52,7 @@ private:
     bool initialized;
     size_t fb_idx;
 
+    UsTimer& timer;
     SpiMaster& spi;
     Pin& cs;
 };

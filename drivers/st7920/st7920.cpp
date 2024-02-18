@@ -30,6 +30,8 @@ constexpr std::array<uint8_t, 3> CMD_DISP_OFF = generate_cmd(0x08);
 constexpr std::array<uint8_t, 3> CMD_DISP_ON = generate_cmd(0x0C);
 constexpr std::array<uint8_t, 3> CMD_CURSOR_BLINK = generate_cmd(0x0F);
 constexpr std::array<uint8_t, 3> CMD_BASIC_MODE = generate_cmd(0x30);
+constexpr std::array<uint8_t, 3> CMD_EXTENDED_MODE = generate_cmd(0x34);
+constexpr std::array<uint8_t, 3> CMD_GRAPHICS_MODE = generate_cmd(0x36);
 constexpr std::array<uint8_t, 3> CMD_SET_ADDR_0 = generate_cmd(0x80);
 
 void Lt7920::redirect_cmd_cb(
@@ -82,11 +84,14 @@ Err Lt7920::init() noexcept
     for (size_t i = 0; i < fb.size(); i+= 3)
         fb[i] = TRANSFER_DATA;
 
-    spi.write(std::span{CMD_BASIC_MODE.data(), CMD_BASIC_MODE.size()}, &cs, nullptr, nullptr);
-    spi.write(std::span{CMD_BASIC_MODE.data(), CMD_BASIC_MODE.size()}, &cs, nullptr, nullptr);
-    // spi.write(std::span{CMD_CLEAR_SCREEN.data(), CMD_CLEAR_SCREEN.size()}, &cs, nullptr, nullptr);
+    spi.write(std::span{CMD_EXTENDED_MODE.data(), CMD_EXTENDED_MODE.size()}, &cs, nullptr, nullptr);
+    spi.write(std::span{CMD_GRAPHICS_MODE.data(), CMD_GRAPHICS_MODE.size()}, &cs, nullptr, nullptr);
+    spi.write(std::span{CMD_CLEAR_SCREEN.data(), CMD_CLEAR_SCREEN.size()}, &cs, nullptr, nullptr);
     spi.write(std::span{CMD_ADDR_INC.data(), CMD_ADDR_INC.size()}, &cs, nullptr, nullptr);
     spi.write(std::span{CMD_DISP_ON.data(), CMD_DISP_ON.size()}, &cs, nullptr, nullptr);
+
+    // send this command twice to set x and y address to 0
+    spi.write(std::span{CMD_SET_ADDR_0.data(), CMD_SET_ADDR_0.size()}, &cs, nullptr, nullptr);
     spi.write(std::span{CMD_SET_ADDR_0.data(), CMD_SET_ADDR_0.size()}, &cs, this, redirect_cmd_cb);
 
     return Err::Ok;

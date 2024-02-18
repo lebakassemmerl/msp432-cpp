@@ -13,14 +13,15 @@
 #include "gpio.h"
 #include "helpers.h"
 #include "led.h"
+#include "st7920.h"
 #include "msp432.h"
-#include "nt7108c.h"
 #include "pin.h"
 #include "spi.h"
 #include "spi_master.h"
 #include "uart.h"
 #include "w2812b.h"
 #include "wdt.h"
+#include "us_timer.h"
 
 Msp432& chip = Msp432::instance();
 
@@ -30,7 +31,8 @@ Led led_blue = Led{chip.gpio_pins().int_pin(IntPinNr::P02_2), false};
 
 Uart uart0{chip.uscia0(), chip.dma(), 115200, 0, 1, 1, 1};
 SpiMaster spi1{chip.uscib1(), chip.dma(), SpiMode::Cpol1Cphase1, 200'000, 2, 3, 2, 2};
-Lt7920 lcd{spi1, chip.gpio_pins().int_pin(IntPinNr::P04_1)};
+UsTimer us_timer{chip.t32_1(), chip.cs()};
+St7920 lcd{spi1, chip.gpio_pins().int_pin(IntPinNr::P04_1), us_timer};
 
 int main(void)
 {
