@@ -16,7 +16,7 @@
 
 void EventTimer::init(const Cs& cs) noexcept
 {
-    t32.init(EventTimer::timer_cb, this);
+    t32.init(true, this, EventTimer::timer_cb);
     t32.set_frequency(1000, cs);
 
     initialized = true;
