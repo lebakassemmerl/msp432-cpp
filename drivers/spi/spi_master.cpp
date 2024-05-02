@@ -65,7 +65,7 @@ Err SpiMaster::init(const Cs& cs) noexcept
         DmaPtrIncrement::Incr8Bit,
         DmaPtrIncrement::NoIncr,
         reinterpret_cast<void*>(this),
-        SpiMaster::useless_tx_handler
+        [] (const uint8_t* src, uint8_t* dst, size_t len, void* inst) noexcept-> void {}
     });
 
     if (ret != Err::Ok)
@@ -77,7 +77,10 @@ Err SpiMaster::init(const Cs& cs) noexcept
         DmaPtrIncrement::NoIncr,
         DmaPtrIncrement::Incr8Bit,
         reinterpret_cast<void*>(this),
-        SpiMaster::redirect_rx_handler
+        [] (const uint8_t* src, uint8_t *dst, size_t len, void* inst) noexcept -> void {
+            SpiMaster* m = reinterpret_cast<SpiMaster*>(inst);
+            m->int_handler(src, dst, len);
+        },
     });
     if (ret != Err::Ok)
         return ret;
@@ -238,15 +241,3 @@ void SpiMaster::int_handler(const uint8_t* src_buf, uint8_t* dst_buf, size_t len
         start_transmission();
 }
 
-void SpiMaster::redirect_rx_handler(
-    const uint8_t* src_buf, uint8_t* dst_buf, size_t len, void* instance) noexcept
-{
-    SpiMaster* inst = reinterpret_cast<SpiMaster*>(instance);
-    inst->int_handler(src_buf, dst_buf, len);
-}
-
-void SpiMaster::useless_tx_handler(
-    const uint8_t* src_buf, uint8_t* dst_buf, size_t len, void* instance) noexcept
-{
-
-}

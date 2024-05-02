@@ -56,10 +56,6 @@ private:
             : type(type), txbuf(txbuf), rxbuf(rxbuf), len(len), cs(cs), context(context), cb(cb) {}
     };
 
-    static void redirect_rx_handler(
-        const uint8_t* src_buf, uint8_t* dst_buf, size_t len, void* instance) noexcept;
-    static void useless_tx_handler(
-        const uint8_t* src_buf, uint8_t* dst_buf, size_t len, void* instance) noexcept;
     void start_transmission() noexcept;
     void int_handler(const uint8_t* src_buf, uint8_t* dst_buf, size_t len) noexcept;
 
