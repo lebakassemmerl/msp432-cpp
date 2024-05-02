@@ -1,9 +1,11 @@
+g+n
 -std=c++2b
 
 -Icore
 -Idrivers/button
 -Idrivers/event_timer
 -Idrivers/led
+-Idrivers/i2c
 -Idrivers/spi
 -Idrivers/st7920
 -Idrivers/uart
