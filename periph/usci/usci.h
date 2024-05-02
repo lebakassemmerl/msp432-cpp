@@ -59,7 +59,7 @@ protected:
 
 class UsciA : public Usci {
 public:
-    constexpr inline UsciARegisters& reg() noexcept
+    inline UsciARegisters& reg() noexcept
     {
         return *reinterpret_cast<UsciARegisters*>(reg_base);
     }
@@ -81,7 +81,7 @@ private:
 
 class UsciB : public Usci {
 public:
-    constexpr inline UsciBRegisters& reg() noexcept
+    inline UsciBRegisters& reg() noexcept
     {
         return *reinterpret_cast<UsciBRegisters*>(reg_base);
     }
