@@ -31,13 +31,12 @@
 
 #include <array>
 #include <atomic>
+#include <bitset>
 #include <expected>
 #include <functional>
 #include <cstddef>
-#include <optional>
 #include <utility>
 
-#include "bitmap.h"
 #include "err.h"
 #include "helpers.h"
 
@@ -207,7 +206,7 @@ private:
     }
 
     std::array<T, N> buf;
-    Bitmap<N> ready;
+    std::bitset<N> ready;
     std::atomic<size_t> head;
     std::atomic<size_t> tail;
 };

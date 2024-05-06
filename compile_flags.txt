@@ -1,4 +1,4 @@
-g+n
+g++
 -std=c++2b
 
 -Icore
@@ -23,4 +23,6 @@ g+n
 -Iperiph/timer32
 -Iperiph/usci
 -Iperiph/wdt
+
+-D__cpp_concepts=202002L
 
