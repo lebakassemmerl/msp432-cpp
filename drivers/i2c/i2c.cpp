@@ -20,24 +20,34 @@ Err I2cMaster::init(const Cs& clk) noexcept
     if (initialized)
         return Err::AlreadyInitialized;
 
-    usci.reg().ctlw0.set(1); // disable module and reset all other settings
+    // disable module and reset all other settings
+    usci.reg().ctlw0.set(uscibregs::ctlw0::swrst.value(1));
 
     // set prescaler for clk-speed
     usci.reg().brw.set(static_cast<uint16_t>(clk.sm_clk() / static_cast<uint32_t>(speed)));
 
     usci.reg().ctlw1.modify(
-        uscibregs::ctlw1::astp.value(0) + // enable automatic stop condition generation
+        uscibregs::ctlw1::astp.value(2) + // enable automatic stop condition generation
         uscibregs::ctlw1::clto.value(0)   // disable clock low timeout counter
     );
 
     usci.reg().ctlw0.modify(
-        uscibregs::ctlw0::mm.value(0) +     // single master environment
-        uscibregs::ctlw0::mst.value(1) +    // Master mode
-        uscibregs::ctlw0::mode.value(3) +   // I2C mode
-        uscibregs::ctlw0::sync.value(0) +   // sync mode
-        uscibregs::ctlw0::ssel.value(2) +   // use SMCLK as I2C clock-source
-        uscibregs::ctlw0::swrst.value(0)    // disable software-reset -> enable module
+        uscibregs::ctlw0::mm.value(0) +   // single master environment
+        uscibregs::ctlw0::mst.value(1) +  // Master mode
+        uscibregs::ctlw0::mode.value(3) + // I2C mode
+        uscibregs::ctlw0::sync.value(0) + // sync mode
+        uscibregs::ctlw0::ssel.value(2)   // use SMCLK as I2C clock-source
     );
+
+    usci.register_irq_handler([](void *cookie) noexcept -> void {
+        I2cMaster *m = reinterpret_cast<I2cMaster*>(cookie);
+        m->handle_interrupt();
+    }, this);
+
+    // setup was successful, enable the module
+    usci.reg().ctlw0.modify(uscibregs::ctlw0::swrst.value(0));
+
+    initialized = true;
 
     return  Err::Ok;
 }
