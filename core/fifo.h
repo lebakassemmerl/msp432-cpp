@@ -62,7 +62,7 @@ public:
         buf[idx] = val;
 
         // when the copying is done, we mark the slot as ready
-        ready.set(idx);
+        ready[idx];
 
         return Err::Ok;
     }
@@ -82,7 +82,7 @@ public:
         new(&buf[idx]) T{std::forward<Args>(args)...};
         
         // when the copying is done, we mark the slot as ready
-        ready.set(idx);
+        ready[idx];
 
         return Err::Ok;
     }
@@ -110,7 +110,7 @@ public:
         idx = tail.load(std::memory_order::acquire);
 
         // after getting the index, we check it the slot is ready
-        if (ready.test(idx)) {
+        if (ready[idx]) {
             return std::expected<std::reference_wrapper<T>, Err>{
                 std::reference_wrapper<T>{buf[idx]}};
         } else {
@@ -137,7 +137,7 @@ public:
         } while (!tail.compare_exchange_weak(old, ny, std::memory_order::seq_cst));
 
         // after 'pulling' out the data from the FIFO, set the ready bit back to 0
-        ready.clear(old);
+        ready[old];
         return std::expected<T, Err>{ret};
     }
 
@@ -151,7 +151,7 @@ public:
         // increment the index..
         idx = fetch_add(tail, 1);
         // ..then clear the corresponding ready bit
-        ready.clear(idx);
+        ready[idx];
 
         return Err::Ok;
     }
@@ -187,7 +187,7 @@ public:
 
         // if the FIFO is not empty, we check if the next pending element is ready
         if (not_empty)
-            return ready.test(t).value();
+            return ready[t];
         else
             return false;
     }

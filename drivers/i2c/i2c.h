@@ -68,11 +68,10 @@ private:
 
         I2cJobType type;
         uint16_t addr;
-        std::span<uint8_t> txbuf;
+        std::span<const uint8_t> txbuf;
         std::span<uint8_t> rxbuf;
         bool addr_10bit;
 
-        bool reading;
         uint16_t buf_idx;
         uint8_t retry_cnt;
 
@@ -80,16 +79,14 @@ private:
         void (*finished)(I2cJobType type, I2cErr err, std::span<uint8_t> rxbuf, void* cookie);
 
         constexpr explicit I2cJob(I2cJobType type, uint16_t addr, bool addr_10bit,
-            std::span<uint8_t> txbuf, std::span<uint8_t> rxbuf, void *cookie,
+            std::span<const uint8_t> txbuf, std::span<uint8_t> rxbuf, void *cookie,
             void (*finished)(I2cJobType type, I2cErr err, std::span<uint8_t> rxbuf, void* cookie))
             noexcept
             : type(type), addr(addr), txbuf(txbuf), rxbuf(rxbuf), addr_10bit(addr_10bit),
-            reading(type == I2cJobType::Read), buf_idx(0), retry_cnt(0), cookie(cookie),
-            finished(finished) {}
+            buf_idx(0), retry_cnt(0), cookie(cookie), finished(finished) {}
 
         constexpr explicit I2cJob() noexcept : type(I2cJobType::Write), addr(0), txbuf(), rxbuf(),
-            addr_10bit(false), reading(false), buf_idx(0), retry_cnt(0), cookie(nullptr),
-            finished(nullptr) {}
+            addr_10bit(false), buf_idx(0), retry_cnt(0), cookie(nullptr), finished(nullptr) {}
     };
 
     inline void start_job(uint16_t addr, bool addr_10bit, bool rx, uint16_t txrx_bytes) noexcept

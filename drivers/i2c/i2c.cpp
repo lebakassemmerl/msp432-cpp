@@ -23,7 +23,7 @@ Err I2cMaster::init(const Cs& clk) noexcept
     usci.reg().ctlw0.set(1); // disable module and reset all other settings
 
     // set prescaler for clk-speed
-    usci.reg().brw.set(clk.sm_clk() / static_cast<uint32_t>(speed));
+    usci.reg().brw.set(static_cast<uint16_t>(clk.sm_clk() / static_cast<uint32_t>(speed)));
 
     usci.reg().ctlw1.modify(
         uscibregs::ctlw1::astp.value(0) + // enable automatic stop condition generation
@@ -63,14 +63,14 @@ Err I2cMaster::write(uint16_t addr,
         return Err::NoMem;
 
     jobfifo.emplace(
-        I2cJobType::Write, addr, addr_10bit, data, std::span<uint8_t>{}, 0, cookie, finished);
+        I2cJobType::Write, addr, addr_10bit, data, std::span<uint8_t>{}, cookie, finished);
 
     if (transmitting.load(std::memory_order_relaxed))
         return Err::Ok;
 
     transmitting.store(true, std::memory_order_release);
 
-    start_job(addr, addr_10bit, false, data.size());
+    start_job(addr, addr_10bit, false, static_cast<uint16_t>(data.size()));
 
     return Err::Ok;
 }
@@ -96,14 +96,14 @@ Err I2cMaster::read(uint16_t addr,
         return Err::NoMem;
 
     jobfifo.emplace(
-        I2cJobType::Read, addr, addr_10bit, std::span<uint8_t>{}, buffer, 0, cookie, finished);
+        I2cJobType::Read, addr, addr_10bit, std::span<uint8_t>{}, buffer, cookie, finished);
 
     if (transmitting.load(std::memory_order_relaxed))
         return Err::Ok;
 
     transmitting.store(true, std::memory_order_release);
 
-    start_job(addr, addr_10bit, true, buffer.size());
+    start_job(addr, addr_10bit, true, static_cast<uint16_t>(buffer.size()));
 
     return Err::Ok;
 }
@@ -115,7 +115,7 @@ Err I2cMaster::write_read(uint16_t addr,
         void (*finished)(I2cJobType type, I2cErr err, std::span<uint8_t> rxbuf, void* cookie),
         bool addr_10bit) noexcept
 {
-    uint16_t txrx_bytes;
+    uint32_t txrx_bytes;
 
     if (addr_10bit && (addr > 1023))
         return Err::OutOfRange;
@@ -132,14 +132,14 @@ Err I2cMaster::write_read(uint16_t addr,
     if (jobfifo.is_full())
         return Err::NoMem;
 
-    jobfifo.emplace(I2cJobType::WriteRead, addr, addr_10bit, txbuf, rxbuf, 0, cookie, finished);
+    jobfifo.emplace(I2cJobType::WriteRead, addr, addr_10bit, txbuf, rxbuf, cookie, finished);
 
     if (transmitting.load(std::memory_order_relaxed))
         return Err::Ok;
 
     transmitting.store(true, std::memory_order_release);
 
-    start_job(addr, addr_10bit, false, txrx_bytes);
+    start_job(addr, addr_10bit, false, static_cast<uint16_t>(txrx_bytes));
 
     return Err::Ok;
 }
@@ -164,11 +164,12 @@ void I2cMaster::handle_interrupt() noexcept
                 return;
 
             I2cJob& new_job = this->jobfifo.peek_ref().value().get();
-            uint16_t txrx_bytes = new_job.txbuf.size() + new_job.rxbuf.size();
+            uint16_t txrx_bytes =
+                static_cast<uint16_t>(new_job.txbuf.size() + new_job.rxbuf.size());
             this->start_job(
                 new_job.addr, new_job.addr_10bit, new_job.type == I2cJobType::Read, txrx_bytes);
         } else {
-            uint16_t txrx_bytes = job.txbuf.size() + job.rxbuf.size();
+            uint16_t txrx_bytes = static_cast<uint16_t>(job.txbuf.size() + job.rxbuf.size());
 
             job.buf_idx = 0;
             job.retry_cnt += 1;
@@ -195,7 +196,7 @@ void I2cMaster::handle_interrupt() noexcept
             );
         }
 
-        job.txbuf[job.buf_idx] = usci.reg().rxbuf.get();
+        job.rxbuf[job.buf_idx] = static_cast<uint8_t>(usci.reg().rxbuf.get());
         job.buf_idx += 1;
     } else if (iflags & uscibregs::ifg::txifg0.mask()) {
         // we know, that we are in transmit-mode since the TX interrupt flag was set
@@ -258,7 +259,7 @@ void I2cMaster::handle_interrupt() noexcept
         } else {
             I2cJob& job = jobfifo.peek_ref().value().get();
             start_job(job.addr, job.addr_10bit, job.type ==I2cJobType::Read,
-                job.txbuf.size() + job.rxbuf.size()); 
+                static_cast<uint16_t>(job.txbuf.size() + job.rxbuf.size()));
         }
     }
 }
