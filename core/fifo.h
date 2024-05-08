@@ -82,7 +82,7 @@ public:
         new(&buf[idx]) T{std::forward<Args>(args)...};
         
         // when the copying is done, we mark the slot as ready
-        ready[idx];
+        ready[idx] = true;
 
         return Err::Ok;
     }
