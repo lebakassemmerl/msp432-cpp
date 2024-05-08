@@ -89,34 +89,7 @@ private:
             addr_10bit(false), buf_idx(0), retry_cnt(0), cookie(nullptr), finished(nullptr) {}
     };
 
-    inline void start_job(uint16_t addr, bool addr_10bit, bool rx, uint16_t txrx_bytes) noexcept
-    {
-        // set the required interrupt-flags
-        usci.reg().ie.set(
-            uscibregs::ifg::nackifg.value(1) +                         // set NACK int.
-            uscibregs::ifg::alifg.value(1) +                           // set arbitration lost int.
-            uscibregs::ifg::cltoifg.value(1) +                         // set clocklow-timeout int.
-            uscibregs::ifg::txifg0.value(static_cast<uint16_t>(!rx)) + // set tx-reg empty int.
-            uscibregs::ifg::rxifg0.value(static_cast<uint16_t>(rx))    // set rx-reg empty int.
-        );
-
-        // set slave-address
-        usci.reg().i2csa.set(addr);
-
-        // number of bytes that will be written AND read
-        usci.reg().tbcnt.set(txrx_bytes);
-
-        // setup the job-config
-        usci.reg().ctlw0.modify(
-            // set addressing-mode (7- or 10-bit)
-            uscibregs::ctlw0::sla10.value(static_cast<uint16_t>(addr_10bit)) +
-            // set transmitter / receiver mode
-            uscibregs::ctlw0::tr.value(static_cast<uint16_t>(!rx)) +
-            // send out start-condition
-            uscibregs::ctlw0::txstt.value(1)
-        );
-    }
-
+    void start_job(uint16_t addr, bool addr_10bit, bool rx, uint16_t txrx_bytes) noexcept;
     void handle_interrupt() noexcept;
 
     UsciB& usci;

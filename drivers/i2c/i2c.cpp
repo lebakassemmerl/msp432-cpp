@@ -23,6 +23,12 @@ Err I2cMaster::init(const Cs& clk) noexcept
     // disable module and reset all other settings
     usci.reg().ctlw0.set(uscibregs::ctlw0::swrst.value(1));
 
+    // disable all interrupts
+    usci.reg().ie.set(0);
+
+    // clear all interrupt-flags
+    usci.reg().ifg.set(0);
+
     // set prescaler for clk-speed
     usci.reg().brw.set(static_cast<uint16_t>(clk.sm_clk() / static_cast<uint32_t>(speed)));
 
@@ -35,8 +41,7 @@ Err I2cMaster::init(const Cs& clk) noexcept
         uscibregs::ctlw0::mm.value(0) +   // single master environment
         uscibregs::ctlw0::mst.value(1) +  // Master mode
         uscibregs::ctlw0::mode.value(3) + // I2C mode
-        uscibregs::ctlw0::sync.value(0) + // sync mode
-        uscibregs::ctlw0::ssel.value(2)   // use SMCLK as I2C clock-source
+        uscibregs::ctlw0::ssel.value(3)   // use SMCLK as I2C clock-source
     );
 
     usci.register_irq_handler([](void *cookie) noexcept -> void {
@@ -154,6 +159,33 @@ Err I2cMaster::write_read(uint16_t addr,
     return Err::Ok;
 }
 
+void I2cMaster::start_job(uint16_t addr, bool addr_10bit, bool rx, uint16_t txrx_bytes) noexcept
+{
+    // set the required interrupt-flags
+    usci.reg().ie.set(
+        uscibregs::ifg::nackifg.value(1) +                         // set NACK int.
+        uscibregs::ifg::alifg.value(1) +                           // set arbitration lost int.
+        uscibregs::ifg::cltoifg.value(1) +                         // set clocklow-timeout int.
+        uscibregs::ifg::txifg0.value(static_cast<uint16_t>(!rx)) + // set tx-reg empty int.
+        uscibregs::ifg::rxifg0.value(static_cast<uint16_t>(rx))    // set rx-reg empty int.
+    );
+
+    // set slave-address
+    usci.reg().i2csa.set(addr);
+
+    // number of bytes that will be written AND read
+    usci.reg().tbcnt.set(txrx_bytes);
+
+    // setup the job-config
+    usci.reg().ctlw0.modify(
+        // set addressing-mode (7- or 10-bit)
+        uscibregs::ctlw0::sla10.value(static_cast<uint16_t>(addr_10bit)) +
+        // set transmitter / receiver mode
+        uscibregs::ctlw0::tr.value(static_cast<uint16_t>(!rx)) +
+        // send out start-condition
+        uscibregs::ctlw0::txstt.value(1)
+    );
+}
 
 void I2cMaster::handle_interrupt() noexcept
 {
@@ -193,6 +225,28 @@ void I2cMaster::handle_interrupt() noexcept
         handle_err(I2cErr::ArbitrationLost);
     } else if (iflags & uscibregs::ifg::cltoifg.mask()) {
         handle_err(I2cErr::ClockLowTimeout);
+    } else if (iflags & uscibregs::ifg::stpifg.mask()) {
+        // stop-condition interrupt, which means our job (no matter what type) has finished
+
+        // disable all interrupt flags, in case we don't have any pending jobs
+        usci.reg().ifg.set(0);
+
+        // invoke the job-callback (if registered)
+        if (job.finished)
+            job.finished(job.type, I2cErr::Ok, job.rxbuf, job.cookie);
+
+        // drop job from FIFO
+        jobfifo.pop();
+
+        // check if any jobs are pending
+        if (jobfifo.is_empty()) {
+            // no pending jobs
+            transmitting.store(false, std::memory_order_release);
+        } else {
+            I2cJob& job = jobfifo.peek_ref().value().get();
+            start_job(job.addr, job.addr_10bit, job.type ==I2cJobType::Read,
+                static_cast<uint16_t>(job.txbuf.size() + job.rxbuf.size()));
+        }
     } else if (iflags & uscibregs::ifg::rxifg0.mask()) {
         // we know, that we are in receive-mode since the RX interrupt flag was set
 
@@ -214,7 +268,7 @@ void I2cMaster::handle_interrupt() noexcept
             // we have to keep transmitting
             usci.reg().txbuf.set(job.txbuf[job.buf_idx]);
             job.buf_idx += 1;
-        } else if (job.buf_idx < (job.txbuf.size() - 1)) {
+        } else if (job.buf_idx == (job.txbuf.size() - 1)) {
             // we are at the last byte to transmit
             if (job.type == I2cJobType::Write) {
                 // there is no read-part left, simply wait for the stop-condition
