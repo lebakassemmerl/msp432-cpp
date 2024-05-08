@@ -65,7 +65,7 @@ Err SpiMaster::init(const Cs& cs) noexcept
         DmaPtrIncrement::Incr8Bit,
         DmaPtrIncrement::NoIncr,
         reinterpret_cast<void*>(this),
-        [] (const uint8_t* src, uint8_t* dst, size_t len, void* inst) noexcept-> void {}
+        [] (const uint8_t* src, uint8_t* dst, size_t len, void* inst) noexcept -> void {}
     });
 
     if (ret != Err::Ok)
@@ -82,6 +82,7 @@ Err SpiMaster::init(const Cs& cs) noexcept
             m->int_handler(src, dst, len);
         },
     });
+
     if (ret != Err::Ok)
         return ret;
 
