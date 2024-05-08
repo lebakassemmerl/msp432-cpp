@@ -17,19 +17,51 @@
 #include "pin.h"
 #include "uart.h"
 
-constexpr uint16_t BMS_ADDR = 0x77;
-constexpr std::array<uint8_t, 1> READ_ID = {0x0D}; 
+constexpr uint16_t BMS_ADDR = 0x76;
+constexpr std::array<uint8_t, 1> READ_ID = {0xF3};
 
-std::array<uint8_t, 1> i2c_buf = {};
+std::array<uint8_t, 12> i2c_buf = {};
 
 Msp432& chip = Msp432::instance();
 Uart uart0{chip.uscia0(), chip.dma(), 115200, 0, 1, 1, 1};
-I2cMaster i2c0{chip.uscib0(), I2cSpeed::KHz400};
+I2cMaster i2c0{chip.uscib0(), I2cSpeed::KHz100};
+
+static void u8_to_hex(uint8_t val, uint8_t *str)
+{
+    constexpr char LOOKUP[] = "0123456789ABCDEF";
+
+    str[0] = LOOKUP[(val >> 4) & 0xF];
+    str[1] = LOOKUP[val & 0xF];
+}
 
 void i2c_cb(I2cJobType t, I2cErr err, std::span<uint8_t> rxbuf, void *cookie) noexcept
 {
     Uart *u = reinterpret_cast<Uart*>(cookie);
-    u->write("I2C callback\r\n");
+    uint8_t hex[128];
+
+    switch (err) {
+    case I2cErr::Ok:
+        for (size_t i = 0; i < rxbuf.size(); i++) {
+            u8_to_hex(rxbuf[i], &hex[i * 3]);
+            hex[i * 3 + 2] = ' ';
+        }
+        u->write("I2C callback no error, data: ");
+        u->write(std::span<uint8_t>{hex, rxbuf.size() * 3});
+        u->write("\r\n");
+        break;
+
+    case I2cErr::Nack:
+        u->write("I2C callback NACK\r\n");
+        break;
+
+    case I2cErr::ArbitrationLost:
+        u->write("I2C callback ArbitrationLost\r\n");
+        break;
+
+    case I2cErr::ClockLowTimeout:
+        u->write("I2C callback ClockLowTimeout\r\n");
+        break;
+    }
 }
 
 int main(void)
@@ -42,8 +74,12 @@ int main(void)
     uart0.init(chip.cs());
 
     // I2C0 pin + driver setup
-    chip.gpio_pins().int_pin(IntPinNr::P01_6).enable_primary_function(); // SDA
-    chip.gpio_pins().int_pin(IntPinNr::P01_7).enable_primary_function(); // SCL
+    IntPin& sda = chip.gpio_pins().int_pin(IntPinNr::P01_6);
+    IntPin& scl = chip.gpio_pins().int_pin(IntPinNr::P01_7);
+    sda.make_input();
+    scl.make_input();
+    sda.enable_primary_function(); // SDA
+    scl.enable_primary_function(); // SCL
     i2c0.init(chip.cs());
 
     Led led_red = Led{chip.gpio_pins().int_pin(IntPinNr::P02_0), false};
@@ -59,7 +95,7 @@ int main(void)
     i2c0.write_read(BMS_ADDR, std::span{READ_ID}, std::span{i2c_buf}, &uart0, i2c_cb);
 
     while (true) {
-        uart0.write("loop\r\n");
+        // uart0.write("loop\r\n");
         led_green.toggle();
         chip.delay_ms(500);
     }
