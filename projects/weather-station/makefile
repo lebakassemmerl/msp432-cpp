@@ -16,6 +16,7 @@ PERIPHERALS += \
 	msp432
 
 DRIVERS += \
+	bme280 \
 	i2c \
 	led \
 	uart \

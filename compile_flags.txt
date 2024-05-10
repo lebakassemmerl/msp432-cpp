@@ -2,6 +2,7 @@ g++
 -std=c++2b
 
 -Icore
+-Idrivers/bme280
 -Idrivers/button
 -Idrivers/event_timer
 -Idrivers/led
