@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "libc.h"
 #include <concepts>
 #include <cstdint>
 #include <cstddef>
@@ -53,5 +54,64 @@ constexpr size_t to_hex(std::span<char> text, T val) noexcept
         text[i - 1] = LOOKUP[val & 0x0F];
 
     return chars;
+}
+
+template<typename T> requires std::integral<T>
+constexpr size_t max_digits()
+{
+    if constexpr (sizeof(T) == 1) {
+        return 3;
+    } else if constexpr (sizeof(T) == 2) {
+        return 5;
+    } else if constexpr (sizeof(T) == 4) {
+        return 10;
+    } else if constexpr ((sizeof(T) == 8) && std::is_signed_v<T>) {
+        return 19;
+    } else if constexpr ((sizeof(T) == 8) && std::is_unsigned_v<T>) {
+        return 20;
+    } else {
+        return 0;
+    }
+}
+
+template<typename T> requires std::signed_integral<T>
+constexpr void int_to_str(T val, char* text, bool fill_with_zeros = false) noexcept
+{
+    size_t idx = max_digits<T>();
+
+    if (val < 0) {
+        val = -val;
+        text[0] = '-';
+    } else {
+        text[0] = ' ';
+    }
+
+    if (fill_with_zeros)
+        libc::memset(&text[1], '0', max_digits<T>());
+    else
+        libc::memset(&text[1], ' ', max_digits<T>());
+
+    while (val > 0) {
+        text[idx] = static_cast<char>(val % 10) - '0';
+        val /= 10;
+        idx--;
+    }
+}
+
+template<typename T> requires std::unsigned_integral<T>
+constexpr void uint_to_str(T val, char* text, bool fill_with_zeros = false) noexcept
+{
+    size_t idx = max_digits<T>();
+
+    if (fill_with_zeros)
+        libc::memset(&text[1], '0', max_digits<T>());
+    else
+        libc::memset(&text[1], ' ', max_digits<T>());
+
+    while (val > 0) {
+        text[idx] = static_cast<char>(val % 10) - '0';
+        val /= 10;
+        idx--;
+    }
 }
 }
