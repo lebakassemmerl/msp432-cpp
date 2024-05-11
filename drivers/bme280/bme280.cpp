@@ -195,7 +195,10 @@ void Bme280::init() noexcept
 
 int32_t Bme280::temperature() const noexcept
 {
-    return ((calib.t_fine * 5 + 128) >> 8);
+    if (state != State::Ready)
+        return -300'000;
+
+    return (((calib.t_fine * 5 + 128) >> 8) * 10);
 }
 
 
