@@ -77,13 +77,14 @@ constexpr size_t max_digits()
 template<typename T> requires std::signed_integral<T>
 constexpr void int_to_str(T val, char* text, bool fill_with_zeros = false) noexcept
 {
+    bool negative;
     size_t idx = max_digits<T>();
 
     if (val < 0) {
         val = -val;
-        text[0] = '-';
+        negative = true;
     } else {
-        text[0] = ' ';
+        negative = false;
     }
 
     if (fill_with_zeros)
@@ -92,16 +93,23 @@ constexpr void int_to_str(T val, char* text, bool fill_with_zeros = false) noexc
         libc::memset(&text[1], ' ', max_digits<T>());
 
     while (val > 0) {
-        text[idx] = static_cast<char>(val % 10) - '0';
+        text[idx] = static_cast<char>(val % 10) + '0';
         val /= 10;
         idx--;
+    }
+
+    if (negative) {
+        if (fill_with_zeros)
+            text[0] = '-';
+        else
+            text[idx] = '-';
     }
 }
 
 template<typename T> requires std::unsigned_integral<T>
 constexpr void uint_to_str(T val, char* text, bool fill_with_zeros = false) noexcept
 {
-    size_t idx = max_digits<T>();
+    size_t idx = max_digits<T>() - 1;
 
     if (fill_with_zeros)
         libc::memset(&text[1], '0', max_digits<T>());
@@ -109,7 +117,7 @@ constexpr void uint_to_str(T val, char* text, bool fill_with_zeros = false) noex
         libc::memset(&text[1], ' ', max_digits<T>());
 
     while (val > 0) {
-        text[idx] = static_cast<char>(val % 10) - '0';
+        text[idx] = static_cast<char>(val % 10) + '0';
         val /= 10;
         idx--;
     }
