@@ -38,9 +38,9 @@ private:
         QueueDevice,
         CheckDevice,
         Reset,
-        WriteConfig,
         ReadCalib1,
         ReadCalib2,
+        WriteConfig,
         Finished,
     };
 

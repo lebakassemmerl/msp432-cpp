@@ -149,13 +149,6 @@ void Bme280::init() noexcept
     case InitState::Reset:
         err = i2c.write(i2c_addr, std::span{CMD_RESET}, this, Bme280::i2c_cb);
         if (err == Err::Ok)
-                init_state = InitState::WriteConfig;
-
-        break;
-
-    case InitState::WriteConfig:
-        err = i2c.write(i2c_addr, std::span{CMD_CONFIG}, this, Bme280::i2c_cb);
-        if (err == Err::Ok)
                 init_state = InitState::ReadCalib1;
 
         break;
@@ -178,13 +171,20 @@ void Bme280::init() noexcept
             Bme280::i2c_cb);
 
         if (err == Err::Ok)
-            init_state = InitState::Finished;
+            init_state = InitState::WriteConfig;
+
+        break;
+
+    case InitState::WriteConfig:
+        // we read out successfully the calib2 values -> parse them and finish the init-sequence
+        calib.init_part2(rxbuf);
+        err = i2c.write(i2c_addr, std::span{CMD_CONFIG}, this, Bme280::i2c_cb);
+        if (err == Err::Ok)
+                init_state = InitState::Finished;
 
         break;
 
     case InitState::Finished:
-        // we read out successfully the calib2 values -> parse them and finish the init-sequence
-        calib.init_part2(rxbuf);
         state = State::Ready;
         break;
 
@@ -200,5 +200,3 @@ int32_t Bme280::temperature() const noexcept
 
     return (((calib.t_fine * 5 + 128) >> 8) * 10);
 }
-
-
