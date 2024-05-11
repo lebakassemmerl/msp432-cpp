@@ -10,6 +10,7 @@
 #include "bme280.h"
 #include "cs.h"
 #include "gpio.h"
+#include "helpers.h"
 #include "i2c.h"
 #include "int_pin.h"
 #include "led.h"
@@ -24,16 +25,12 @@ Uart uart0{chip.uscia0(), chip.dma(), 115200, 0, 1, 1, 1};
 I2cMaster i2c0{chip.uscib0(), I2cSpeed::KHz100};
 Bme280 bme{i2c0, BME_ADDR};
 
-static void u8_to_hex(uint8_t val, uint8_t *str)
-{
-    constexpr char LOOKUP[] = "0123456789ABCDEF";
-
-    str[0] = LOOKUP[(val >> 4) & 0xF];
-    str[1] = LOOKUP[val & 0xF];
-}
-
 int main(void)
 {
+    uint64_t last_loop = 0;
+    uint64_t now = 0;
+    char temp_str[32] = {0};
+
     chip.init();
 
     // UART0 pin + driver setup
@@ -61,9 +58,18 @@ int main(void)
     led_blue.on();
     uart0.write("\r\nHallo erstmal!\r\n");
 
+    now = chip.cortexm4f().systick().uptime_ms();
     while (true) {
-        // uart0.write("loop\r\n");
+        bme.periodic();
+
+        if ((now - last_loop) < 1000)
+            continue;
+        last_loop = now;
+
         led_green.toggle();
-        chip.delay_ms(500);
+
+        hlp::int_to_str(bme.temperature(), temp_str);
+        uart0.write("\r\nmeasured temperature in milli-degC: ");
+        uart0.write(std::span<uint8_t>{reinterpret_cast<uint8_t*>(temp_str), 10});
     }
 }
