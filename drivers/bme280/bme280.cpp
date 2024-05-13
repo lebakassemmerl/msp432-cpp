@@ -193,10 +193,66 @@ void Bme280::init() noexcept
     }
 }
 
-int32_t Bme280::temperature() const noexcept
+int32_t Bme280::temperature_mdeg() const noexcept
 {
     if (state != State::Ready)
         return -300'000;
 
     return (((calib.t_fine * 5 + 128) >> 8) * 10);
 }
+
+int32_t Bme280::pressure_pa() const noexcept
+{
+    static constexpr int64_t C1 = 128000LL;
+    static constexpr int64_t C2 = 140737488355328LL;
+    static constexpr int64_t C3 = 1048576LL;
+    static constexpr int64_t C4 = 3125LL;
+
+    int64_t v1 = static_cast<int64_t>(calib.t_fine) - C1;
+    int64_t tmp;
+    int64_t v2;
+    int64_t v4;
+
+    v2 = (v1 * v1 * calib.press[5]) + (v1 * calib.press[4] << 17) + (calib.press[3] << 35);
+    v1 = ((v1 * v1 * calib.press[2]) >> 8) + (v1 * calib.press[1] >> 12);
+    v1 = ((v1 + C2) * calib.press[0]) >> 33;
+
+    if (v1 == 0)
+        return 0;
+
+    v4 = (((C3 - (static_cast<int64_t>(press_raw) >> 31)) - v2) * C4 / v1;
+    tmp = v4 >> 13;
+    v1 = (calib.press[8] * tmp * tmp) >> 25;
+    v2 = (calib.press[7] * v4) >> 19;
+
+    return ((((v1 + v2 + v4) >> 8) + (calib.press[6] >> 4)) >> 4);
+}
+
+int32_t Bme280::humidity_percent() const noexcept
+{
+    static constexpr int32_t C1 = 76800L;
+    static constexpr int32_t C2 = 1L << 14;
+    static constexpr int32_t C3 = 1L << 15;
+    static constexpr int32_t C4 = 1L << 21;
+    static constexpr int32_t C5 = 1L << 13;
+    static constexpr int32_t C6 = 419430400L;
+
+    int32_t v1 = calib.t_fine - C1;
+    int32_t v2 = humid_raw << 14;
+    int32_t v4 = v1 * calib.humid[4];
+    int32_t v5 = ((v2 - (calib.humid[3] << 20) - v4) + C2) >> 15;
+    int32_t v3 = (v1 * calib.humid[2]) >> 11;
+
+    v2 = (v1 * calib.humid[5]) >> 10;
+    v4 = ((v2 * (v3 + C3)) >> 10) + C4;
+    v2 = ((v4 * calib.humid[1]) + C5) >> 16;
+    v1 = v3 >> 15;
+    v3 = v5 * v2;
+    v4 = (v1 * v1) >> 7;
+    v5 = v3 - ((v4 * calib.humid[0]) >> 4);
+    v5 = v5 < 0 ? 0 : v5;
+    v5 = v5 > C6 ? C6 : v5;
+
+    return (v5 >> 22);
+}
+

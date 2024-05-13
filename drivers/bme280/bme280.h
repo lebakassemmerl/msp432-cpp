@@ -30,9 +30,14 @@ public:
 
     void periodic() noexcept;
 
-    // returns the temperature in centi-degrees -> e.g. 2375 equal 23.75degC
-    int32_t temperature() const noexcept;
+    // returns the temperature in milli-degrees -> e.g. 23750 equal 23.75degC
+    int32_t temperature_mdeg() const noexcept;
 
+    // returns the air-pressure in Pascal
+    int32_t pressure_pa() const noexcept;
+
+    // returns the humidity in percent
+    uint8_t humidity_percent() const noexcept;
 private:
     enum class InitState : uint8_t {
         QueueDevice,
